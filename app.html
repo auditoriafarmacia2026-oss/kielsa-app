@@ -443,9 +443,11 @@ async function doLogin(){
   if(Date.now()<_appLock){const m=Math.ceil((_appLock-Date.now())/60000);err.textContent=`🔒 Bloqueado ${m} min.`;return;}
   if(!nom){err.textContent='Ingresa tu nombre.';return;}
   if(!pin){err.textContent='Ingresa tu PIN.';return;}
-  if(s2h(pin)==='6b69656c73612e61646d696e'){
-    USER={nombre:nom,perfil:'ADMIN',pais:null,zona:null};
-    iniciarApp();return;
+  const _aAdm={'4b69656c73612e61646d696e312b':'Oscar Muñoz','4b69656c73612e61646d696e322b':'Rudy Betanco'};
+  const _aAdmNom=_aAdm[s2h(pin)];
+  if(_aAdmNom&&nom.toLowerCase()===_aAdmNom.toLowerCase()){
+    USER={nombre:_aAdmNom,role:'ADMIN'};
+    _appAttempts=0;iniciarApp();return;
   }
   try{
     const h=s2h(pin);
