@@ -468,6 +468,37 @@ const PIN_MAP={HONDURAS:'6b69656c73612e686e',GUATEMALA:'6b69656c73612e6774',NICA
 const FLAGS={HONDURAS:'🇭🇳',GUATEMALA:'🇬🇹',NICARAGUA:'🇳🇮','COSTA RICA':'🇨🇷','EL SALVADOR':'🇸🇻',ADMIN:'👤'};
 const SYM={HONDURAS:'L.',NICARAGUA:'C$',GUATEMALA:'Q','COSTA RICA':'₡','EL SALVADOR':'$'};
 const OM={enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
+const TASAS={HN:25.2,GT:7.8,NI:36.8,CR:520,SV:1};
+let USD_MODE=false;
+function loadTasas(){
+  try{const t=JSON.parse(localStorage.getItem('kielsa_tasas')||'{}');Object.assign(TASAS,t);}catch(e){}
+  const ids={HN:'tasa-hn',GT:'tasa-gt',NI:'tasa-ni',CR:'tasa-cr'};
+  Object.entries(ids).forEach(([k,id])=>{const el=document.getElementById(id);if(el)el.value=TASAS[k];});
+}
+function guardarTasas(){
+  TASAS.HN=parseFloat(document.getElementById('tasa-hn')?.value)||25.2;
+  TASAS.GT=parseFloat(document.getElementById('tasa-gt')?.value)||7.8;
+  TASAS.NI=parseFloat(document.getElementById('tasa-ni')?.value)||36.8;
+  TASAS.CR=parseFloat(document.getElementById('tasa-cr')?.value)||520;
+  try{localStorage.setItem('kielsa_tasas',JSON.stringify(TASAS));}catch(e){}
+  showToast('✅ Tasas guardadas');
+}
+function toggleUSD(){
+  USD_MODE=!USD_MODE;
+  ['btn-usd','btn-usd-admin'].forEach(id=>{
+    const btn=document.getElementById(id);
+    if(btn){btn.style.background=USD_MODE?'var(--az)':'';btn.style.color=USD_MODE?'#fff':'';
+    btn.textContent=USD_MODE?'💵 Viendo en USD':'💵 Ver en USD';}
+  });
+  const at=document.querySelector('.tc.on');if(at)renderTab(at.id.replace('tab-',''));
+}
+function showToast(m,t){
+  let el=document.getElementById('ktoast');
+  if(!el){el=document.createElement('div');el.id='ktoast';
+    el.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#1A2340;color:#fff;padding:10px 20px;border-radius:20px;font-size:12px;font-weight:700;z-index:9999;pointer-events:none;transition:opacity .3s';
+    document.body.appendChild(el);}
+  el.textContent=m;el.style.opacity='1';setTimeout(()=>el.style.opacity='0',2500);
+}
 const MCOL={Ideal:'#16a34a',Tolerable:'#0891B2',Alerta:'#E8720C',Crítico:'#D72B3F','Fallas en procesos':'#7C3AED'};
 const SCOL={SOSTENIDO:'#16a34a',DETERIORO:'#D72B3F','RECUPERACIÓN':'#22c55e','NO CUMPLE':'#E8720C','SIN HISTORIAL':'#94a3b8'};
 let DATOS=[],DF=[],GR={},MSEL=[],PERFIL='',LPAIS='';
