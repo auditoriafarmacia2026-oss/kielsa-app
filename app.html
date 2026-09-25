@@ -32,10 +32,117 @@ body{font-family:"Segoe UI",system-ui,sans-serif;background:#001040;color:#fff;m
 .tb-ttl{color:#fff;font-size:13px;font-weight:800;flex:1}
 .tb-usr{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#FFD100;font-size:10px;padding:3px 10px;border-radius:10px;font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tb-out{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);font-size:10px;padding:4px 9px;border-radius:7px;cursor:pointer;font-family:inherit}
+/* NAVEGACION: escritorio tipo panel lateral / móvil conserva pestañas */
 .tabs{background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.08);display:flex;overflow-x:auto}.tabs::-webkit-scrollbar{height:0}
 .tab{padding:12px 16px;font-size:11px;font-weight:700;color:rgba(255,255,255,.4);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
 .tab.on{color:var(--am);border-bottom-color:var(--am)}
+.side-brand,.side-section,.side-foot{display:none}
 .main{padding:14px;padding-bottom:40px}
+
+/* Vista escritorio — Opción 2: panel lateral */
+@media (min-width:900px){
+  #app{min-height:100vh}
+  .topbar{height:58px;padding:0 24px}
+  .topbar .tb-logo{display:none}
+  .tb-ttl{font-size:15px}
+  .tb-usr{font-size:10px;max-width:190px;padding:5px 12px}
+  .tb-out{font-size:11px;padding:6px 11px}
+  .tabs{
+    position:fixed;
+    left:0;top:58px;bottom:0;
+    width:225px;
+    z-index:90;
+    display:flex;
+    flex-direction:column;
+    overflow-y:auto;
+    overflow-x:hidden;
+    padding:16px 12px 14px;
+    background:linear-gradient(180deg,#061936 0%,#04142d 100%);
+    border-right:1px solid rgba(255,255,255,.09);
+    border-bottom:0;
+    box-shadow:8px 0 30px rgba(0,0,0,.12);
+  }
+  .side-brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:4px 7px 18px;
+    margin-bottom:8px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .side-mark{
+    width:42px;height:34px;border-radius:9px;
+    background:#fff;color:#003DA5;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;font-weight:1000;letter-spacing:-1px;
+  }
+  .side-brand strong{display:block;color:#fff;font-size:14px;line-height:1.1}
+  .side-brand span{display:block;color:rgba(255,255,255,.42);font-size:10px;margin-top:3px}
+  .side-section{
+    display:block;
+    color:rgba(255,255,255,.28);
+    font-size:9px;font-weight:800;
+    text-transform:uppercase;letter-spacing:.9px;
+    padding:13px 9px 6px;
+  }
+  .tabs .tab{
+    width:100%;
+    flex:0 0 auto;
+    padding:10px 11px;
+    margin:2px 0;
+    border:0;
+    border-radius:9px;
+    font-size:11px;
+    color:rgba(255,255,255,.56);
+    display:flex;
+    align-items:center;
+    gap:9px;
+    text-align:left;
+  }
+  .tabs .tab:hover{background:rgba(255,255,255,.055);color:#fff}
+  .tabs .tab.on{
+    background:rgba(255,209,0,.12);
+    color:var(--am);
+    border:1px solid rgba(255,209,0,.18);
+    box-shadow:inset 3px 0 0 var(--am);
+  }
+  .side-foot{
+    display:block;
+    margin-top:auto;
+    padding:12px 8px 2px;
+    border-top:1px solid rgba(255,255,255,.08);
+  }
+  .side-user{
+    font-size:10px;color:#fff;font-weight:800;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .side-role{font-size:9px;color:rgba(255,255,255,.38);margin-top:2px}
+  .main{
+    margin-left:225px;
+    min-height:calc(100vh - 58px);
+    padding:22px 30px 50px;
+  }
+  .main>.pg{max-width:1180px;margin:0 auto}
+  .card{border-radius:13px}
+  .ttl{font-size:20px}
+  .sub{font-size:11px}
+  .kpis{grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+  .pi{padding:14px 16px}
+  .mbox{max-width:760px;margin:0 auto;border-radius:20px 20px 0 0}
+}
+
+/* En pantallas medianas/grandes, el contenido no se estira de lado a lado */
+@media (min-width:1200px){
+  .main{padding-left:42px;padding-right:42px}
+  .main>.pg{max-width:1220px}
+}
+
+/* Móvil/tablet: mantiene la navegación original horizontal */
+@media (max-width:899px){
+  .side-brand,.side-section,.side-foot{display:none!important}
+  .tabs{position:static}
+  .main{margin-left:0}
+}
 .pg{display:none}.pg.on{display:block}
 /* CARDS */
 .card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:15px;margin-bottom:11px}
@@ -605,17 +712,44 @@ function iniciarApp(){
 // ── TABS ─────────────────────────────────────────────────────
 function buildTabs(){
   const t=$('tabs');
+  const roleLabel=USER.role==='AUDITOR'?'Auditor':USER.role==='JEFE_CI'?'Jefe CI Campo':'Administrador';
+  $('tb-ttl').textContent=roleLabel;
+
+  const head=`<div class="side-brand">
+    <div class="side-mark">K+</div>
+    <div><strong>Kielsa CI</strong><span>${roleLabel}</span></div>
+  </div>`;
+
   if(USER.role==='AUDITOR'){
-    $('tb-ttl').textContent='Auditor';
-    t.innerHTML=`<div class="tab on" onclick="goTab('miplan',this)">Mi Plan</div>`;
+    t.innerHTML=head+
+      `<div class="side-section">Trabajo</div>
+       <div class="tab on" onclick="goTab('miplan',this)">📋 Mi Plan</div>
+       <div class="side-foot"><div class="side-user">${USER.nombre||'Usuario'}</div><div class="side-role">Auditor · ${USER.pais||'–'}</div></div>`;
     goTab('miplan');
   } else if(USER.role==='JEFE_CI'){
-    $('tb-ttl').textContent='Jefe CI';
-    t.innerHTML=`<div class="tab on" onclick="goTab('jefplan',this)">Plan</div><div class="tab" onclick="goTab('sugerido',this)">Sugerido</div><div class="tab" onclick="goTab('resultados',this)">Resultados</div><div class="tab" onclick="goTab('ajustes',this)">Ajustes</div><div class="tab" onclick="goTab('usuarios',this)">Auditores</div>`;
+    t.innerHTML=head+
+      `<div class="side-section">Planificación</div>
+       <div class="tab on" onclick="goTab('jefplan',this)">📋 Plan del Mes</div>
+       <div class="tab" onclick="goTab('sugerido',this)">💡 Plan Sugerido</div>
+       <div class="side-section">Seguimiento</div>
+       <div class="tab" onclick="goTab('resultados',this)">📊 Resultados</div>
+       <div class="tab" onclick="goTab('ajustes',this)">🔧 Ajustes</div>
+       <div class="side-section">Gestión</div>
+       <div class="tab" onclick="goTab('usuarios',this)">👥 Auditores</div>
+       <div class="side-foot"><div class="side-user">${USER.nombre||'Usuario'}</div><div class="side-role">Jefe CI · ${USER.pais||'–'}${USER.zona?' · '+USER.zona:''}</div></div>`;
     goTab('jefplan');
   } else {
-    $('tb-ttl').textContent='Admin';
-    t.innerHTML=`<div class="tab on" onclick="goTab('jefplan',this)">Plan</div><div class="tab" onclick="goTab('sugerido',this)">Sugerido</div><div class="tab" onclick="goTab('resultados',this)">Resultados</div><div class="tab" onclick="goTab('ajustes',this)">Ajustes</div><div class="tab" onclick="goTab('usuarios',this)">Usuarios</div><div class="tab" onclick="goTab('admin',this)">Admin</div>`;
+    t.innerHTML=head+
+      `<div class="side-section">Planificación</div>
+       <div class="tab on" onclick="goTab('jefplan',this)">📋 Plan del Mes</div>
+       <div class="tab" onclick="goTab('sugerido',this)">💡 Plan Sugerido</div>
+       <div class="side-section">Seguimiento</div>
+       <div class="tab" onclick="goTab('resultados',this)">📊 Resultados</div>
+       <div class="tab" onclick="goTab('ajustes',this)">🔧 Ajustes</div>
+       <div class="side-section">Gestión</div>
+       <div class="tab" onclick="goTab('usuarios',this)">👥 Usuarios</div>
+       <div class="tab" onclick="goTab('admin',this)">⚙️ Administración</div>
+       <div class="side-foot"><div class="side-user">${USER.nombre||'Administrador'}</div><div class="side-role">Administrador</div></div>`;
     goTab('jefplan');
   }
 }
