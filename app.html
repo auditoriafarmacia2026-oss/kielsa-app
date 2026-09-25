@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<meta name="theme-color" content="#001040">
+<title>Kielsa CI — App</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"Segoe UI",system-ui,sans-serif;background:#001040;color:#fff;min-height:100vh}
+:root{--az:#003DA5;--az2:#002b8a;--am:#FFD100;--ro:#D72B3F;--ve:#16a34a;--na:#E8720C;--cy:#0891B2;--mo:#7C3AED;--gr3:#8896B3}
+/* LOGIN */
+#login{position:fixed;inset:0;background:linear-gradient(145deg,#001040,#002b8a);display:flex;align-items:center;justify-content:center;z-index:500;padding:20px;overflow-y:auto}
+.lb{background:rgba(255,255,255,.06);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:32px;width:100%;max-width:360px;text-align:center}
+.lb-logo{background:#fff;border-radius:12px;padding:8px 20px;display:inline-flex;margin-bottom:18px}
+.lb-logo img{height:36px}
+.lb h2{font-size:18px;font-weight:800;color:#fff;margin-bottom:4px}
+.lb p{font-size:12px;color:rgba(255,255,255,.5);margin-bottom:20px}
+.lerr{color:#ff6b6b;font-size:12px;margin-bottom:10px;min-height:16px}
+.inp{width:100%;padding:12px 14px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:10px;font-size:14px;font-family:inherit;outline:none;margin-bottom:10px;color:#fff;transition:border-color .2s}
+.inp::placeholder{color:rgba(255,255,255,.3)}
+.inp:focus{border-color:var(--am)}
+.inp.pin{font-size:18px;letter-spacing:4px;text-align:center;font-weight:700}
+.btn{width:100%;padding:13px;border:none;border-radius:10px;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-am{background:var(--am);color:#001040}
+.btn-am:hover{background:#e6bc00}
+/* APP */
+#app{display:none;min-height:100vh;background:#001040}
+.topbar{background:rgba(0,0,0,.3);backdrop-filter:blur(10px);height:54px;display:flex;align-items:center;padding:0 16px;gap:10px;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.08)}
+.tb-logo{background:#fff;border-radius:8px;padding:4px 12px}.tb-logo img{height:26px}
+.tb-ttl{color:#fff;font-size:13px;font-weight:800;flex:1}
+.tb-usr{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);color:#FFD100;font-size:10px;padding:3px 10px;border-radius:10px;font-weight:700;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb-out{background:none;border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);font-size:10px;padding:4px 9px;border-radius:7px;cursor:pointer;font-family:inherit}
+.tabs{background:rgba(0,0,0,.2);border-bottom:1px solid rgba(255,255,255,.08);display:flex;overflow-x:auto}.tabs::-webkit-scrollbar{height:0}
+.tab{padding:12px 16px;font-size:11px;font-weight:700;color:rgba(255,255,255,.4);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+.tab.on{color:var(--am);border-bottom-color:var(--am)}
+.main{padding:14px;padding-bottom:40px}
+.pg{display:none}.pg.on{display:block}
+/* CARDS */
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:15px;margin-bottom:11px}
+.ct{font-size:12px;font-weight:800;color:var(--am);margin-bottom:11px;display:flex;align-items:center;justify-content:space-between}
+.ttl{font-size:17px;font-weight:900;color:#fff;margin-bottom:3px}
+.sub{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:12px}
+.fl{font-size:10px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:3px}
+.sel{width:100%;padding:9px 11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;font-family:inherit;outline:none;color:#fff;margin-bottom:9px}
+.sel option{background:#001040;color:#fff}
+.sel:focus{border-color:var(--am)}
+.fi{width:100%;padding:9px 11px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;font-size:12px;font-family:inherit;outline:none;color:#fff;transition:border-color .2s;margin-bottom:9px}
+.fi::placeholder{color:rgba(255,255,255,.3)}
+.fi:focus{border-color:var(--am)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.fg{display:flex;flex-direction:column}
+/* PLAN ITEMS - OPCIÓN A */
+.pi{border-radius:12px;padding:13px;margin-bottom:8px;border:1px solid rgba(255,255,255,.1);cursor:pointer;transition:all .18s;display:flex;align-items:center;gap:12px;position:relative;overflow:hidden}
+.pi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.pi.pend{background:rgba(232,114,12,.08)}.pi.pend::before{background:var(--na)}
+.pi.draft{background:rgba(8,145,178,.08)}.pi.draft::before{background:var(--cy)}
+.pi.done{background:rgba(22,163,74,.06);opacity:.8}.pi.done::before{background:var(--ve)}
+.pi:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.2)}
+.pi-date{flex-shrink:0;text-align:center;border-radius:9px;padding:6px 8px;min-width:46px}
+.pi-date .d-day{font-size:18px;font-weight:900;line-height:1}
+.pi-date .d-mon{font-size:9px;font-weight:700;text-transform:uppercase;opacity:.8}
+.pi-body{flex:1;min-width:0}
+.pi-nom{font-size:14px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px}
+.pi-cat{font-size:9px;font-weight:700;padding:1px 6px;border-radius:4px}
+.cat-A{background:#5b21b6;color:#fff}.cat-B{background:var(--az);color:#fff}.cat-C{background:var(--ve);color:#fff}
+.pi-meta{font-size:10px;color:rgba(255,255,255,.4);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pi-jop{font-size:10px;color:rgba(255,255,255,.35);margin-top:2px}
+.pi-st{font-size:9px;font-weight:700;padding:3px 9px;border-radius:8px;flex-shrink:0}
+.st-pend{background:rgba(232,114,12,.2);color:#E8720C}
+.st-draft{background:rgba(8,145,178,.2);color:var(--cy)}
+.st-done{background:rgba(22,163,74,.2);color:var(--ve)}
+/* KPIs */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:11px 13px}
+.kl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:rgba(255,255,255,.4);margin-bottom:3px}
+.kv{font-size:20px;font-weight:900}
+/* MODAL */
+.modal{display:none;position:fixed;inset:0;background:rgba(0,8,32,.85);z-index:300;align-items:flex-end;backdrop-filter:blur(8px)}
+.modal.show{display:flex}
+.mbox{background:#0a1628;border:1px solid rgba(255,255,255,.12);border-radius:20px 20px 0 0;padding:18px 16px 36px;width:100%;max-height:93vh;overflow-y:auto}
+.mhandle{width:36px;height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin:0 auto 14px}
+.mttl{font-size:16px;font-weight:900;color:#fff;margin-bottom:2px}
+.msub{font-size:11px;color:rgba(255,255,255,.4);margin-bottom:16px}
+.est-btns{display:flex;gap:7px;margin-bottom:14px}
+.eb{flex:1;padding:9px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;color:rgba(255,255,255,.6);font-family:inherit;text-align:center;transition:all .15s}
+.eb.on-ej{border-color:var(--ve);background:rgba(22,163,74,.15);color:var(--ve)}
+.eb.on-no{border-color:var(--ro);background:rgba(215,43,63,.15);color:#ff6b6b}
+.shdr{font-size:10px;font-weight:800;color:var(--am);text-transform:uppercase;letter-spacing:.6px;margin:13px 0 8px;padding-bottom:4px;border-bottom:1px solid rgba(255,255,255,.1)}
+.hora-row{display:grid;grid-template-columns:1fr auto;gap:6px;align-items:end;margin-bottom:9px}
+.btn-ahora{padding:9px 12px;background:var(--az);color:#fff;border:none;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;height:38px;white-space:nowrap}
+.cond-result{background:linear-gradient(135deg,rgba(0,61,165,.4),rgba(0,43,138,.4));border:1px solid rgba(0,61,165,.5);border-radius:12px;padding:13px 15px;margin-bottom:14px;text-align:center}
+.cond-lbl{font-size:9px;font-weight:700;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.cond-val{font-size:20px;font-weight:900}
+.cond-pct{font-size:10px;color:rgba(255,255,255,.35);margin-top:3px}
+/* Jefe CI items */
+.aud-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-left:4px solid var(--mo);border-radius:12px;padding:13px;margin-bottom:9px}
+.aud-nom{font-size:13px;font-weight:800;color:var(--mo);margin-bottom:8px;display:flex;align-items:center;justify-content:space-between}
+.farm-tag{display:inline-flex;align-items:center;gap:5px;border-radius:7px;padding:3px 9px;margin:2px;font-size:11px;font-weight:600}
+.farm-pend{background:rgba(232,114,12,.15);border:1px solid rgba(232,114,12,.3);color:#E8720C}
+.farm-done{background:rgba(22,163,74,.15);border:1px solid rgba(22,163,74,.3);color:var(--ve)}
+.farm-draft{background:rgba(8,145,178,.15);border:1px solid rgba(8,145,178,.3);color:var(--cy)}
+.farm-tag button{background:none;border:none;color:rgba(255,100,100,.7);cursor:pointer;font-size:13px;line-height:1;padding:0}
+.btn-sm{padding:5px 11px;border-radius:7px;border:none;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit}
+.btn-az-sm{background:var(--az);color:#fff}
+.btn-am-sm{background:var(--am);color:#001040}
+.btn-ro-sm{background:rgba(215,43,63,.2);color:#ff6b6b;border:1px solid rgba(215,43,63,.3)}
+.edit-row{display:flex;gap:6px;margin-top:8px;align-items:center}
+.edit-row .fi{margin-bottom:0;flex:1}
+/* Plan sugerido */
+.sug-item{border-radius:10px;padding:11px 13px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+.sug-crit{background:rgba(215,43,63,.12);border:1px solid rgba(215,43,63,.25);border-left:3px solid var(--ro)}
+.sug-60{background:rgba(232,114,12,.1);border:1px solid rgba(232,114,12,.2);border-left:3px solid var(--na)}
+.sug-mes{background:rgba(0,61,165,.12);border:1px solid rgba(0,61,165,.25);border-left:3px solid var(--az)}
+.sug-extra{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.2);border-left:3px solid var(--mo)}
+/* USR */
+.usr-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-left:4px solid var(--cy);border-radius:10px;padding:12px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between}
+/* PDF report */
+.informe-badge{background:rgba(215,43,63,.15);border:1px solid rgba(215,43,63,.3);color:#ff6b6b;font-size:9px;font-weight:700;padding:2px 8px;border-radius:5px}
+/* Toast */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#0a1628;border:1px solid rgba(255,255,255,.15);color:#fff;padding:10px 20px;border-radius:18px;font-size:12px;font-weight:600;opacity:0;transition:all .3s;z-index:999;pointer-events:none;white-space:nowrap;max-width:90vw}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.ok{background:rgba(22,163,74,.3);border-color:rgba(22,163,74,.5);color:var(--ve)}
+#toast.err{background:rgba(215,43,63,.3);border-color:rgba(215,43,63,.5);color:#ff6b6b}
+#toast.info{background:rgba(8,145,178,.3);border-color:rgba(8,145,178,.5);color:var(--cy)}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:middle}
+@keyframes sp{to{transform:rotate(360deg)}}
+.empty{text-align:center;padding:36px 16px;color:rgba(255,255,255,.3);font-size:12px}
+.divider{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="lb">
+    <div class="lb-logo"><img src="data:image/png;base64,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" alt="Kielsa"></div>
+    <h2>Control Interno de Campo</h2>
+    <p>Ingresa tu nombre y PIN de acceso</p>
+    <div class="lerr" id="lerr"></div>
+    <input class="inp" id="ln" placeholder="Tu nombre completo" autocomplete="name">
+    <input class="inp pin" id="pin" type="password" placeholder="PIN" maxlength="14" onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn btn-am" onclick="doLogin()">Ingresar →</button>
+    <div style="font-size:10px;color:rgba(255,255,255,.2);margin-top:12px">Desarrollado por Oscar Paiz</div>
+  </div>
+</div>
+
+<div id="app">
+  <div class="topbar">
+    <div class="tb-logo"><img src="data:image/png;base64,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" alt="Kielsa"></div>
+    <div class="tb-ttl" id="tb-ttl">App CI</div>
+    <span class="tb-usr" id="tb-usr"></span>
+    <button class="tb-out" onclick="logout()">Salir</button>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="main">
+
+    <!-- AUDITOR: MI PLAN -->
+    <div class="pg" id="pg-miplan">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div><div class="ttl">Mi Plan</div><div class="sub" id="plan-sub">–</div></div>
+        <select class="sel" id="sel-mes" onchange="loadPlan()" style="width:auto;margin-bottom:0">
+          <option value="enero">Enero</option><option value="febrero">Febrero</option><option value="marzo">Marzo</option><option value="abril">Abril</option><option value="mayo">Mayo</option><option value="junio">Junio</option><option value="julio">Julio</option><option value="agosto">Agosto</option><option value="septiembre" selected>Septiembre</option><option value="octubre">Octubre</option><option value="noviembre">Noviembre</option><option value="diciembre">Diciembre</option>
+        </select>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="kl">Pendientes</div><div class="kv" id="k-pend" style="color:var(--na)">–</div></div>
+        <div class="kpi"><div class="kl">En proceso</div><div class="kv" id="k-draft" style="color:var(--cy)">–</div></div>
+        <div class="kpi"><div class="kl">Ejecutados</div><div class="kv" id="k-ejec" style="color:var(--ve)">–</div></div>
+        <div class="kpi"><div class="kl">Total</div><div class="kv" id="k-total" style="color:#fff">–</div></div>
+      </div>
+      <div id="plan-list"><div class="empty">Cargando...</div></div>
+    </div>
+
+    <!-- JEFE CI: PLAN -->
+    <div class="pg" id="pg-jefplan">
+      <div class="ttl">Plan del Mes</div><div class="sub">Asignaciones por auditor</div>
+      <div class="card">
+        <div class="ct">Cargar desde Excel</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:8px">Excel debe tener hoja <strong style="color:rgba(255,255,255,.7)">Plan</strong> y hoja <strong style="color:rgba(255,255,255,.7)">Parametros</strong> (FARMACIA | VENTA_PROM | FAL_TOLERABLE | CATEGORIA)</div>
+        <div class="row2" style="margin-bottom:9px">
+          <div class="fg"><label class="fl">Mes</label>
+            <select class="sel" id="jef-mes" style="margin-bottom:0">
+              <option value="enero">Enero</option><option value="febrero">Febrero</option><option value="marzo">Marzo</option><option value="abril">Abril</option><option value="mayo">Mayo</option><option value="junio">Junio</option><option value="julio">Julio</option><option value="agosto">Agosto</option><option value="septiembre" selected>Septiembre</option><option value="octubre">Octubre</option><option value="noviembre">Noviembre</option><option value="diciembre">Diciembre</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Zona</label>
+            <select class="sel" id="jef-zona" onchange="loadJefPlan()" style="margin-bottom:0">
+              <option value="">Todas</option><option value="NORTE">Norte</option><option value="CENTRO">Centro</option>
+            </select>
+          </div>
+        </div>
+        <div style="border:1px dashed rgba(255,255,255,.15);border-radius:9px;padding:14px;text-align:center;cursor:pointer;margin-bottom:7px" onclick="document.getElementById('fi-excel').click()">
+          <div style="font-size:22px;margin-bottom:3px">📊</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4)"><strong style="color:var(--am)">Selecciona</strong> el Excel del plan</div>
+          <input type="file" id="fi-excel" accept=".xlsx,.xls" style="display:none" onchange="cargarExcel(this)">
+        </div>
+        <div id="excel-status" style="font-size:11px;color:rgba(255,255,255,.4)"></div>
+      </div>
+      <div class="card">
+        <div class="ct"><span>Asignaciones actuales</span><button class="btn-sm btn-az-sm" onclick="loadJefPlan()">↺</button></div>
+        <div id="jef-plan-list"><div class="empty">Sin plan cargado</div></div>
+      </div>
+    </div>
+
+    <!-- JEFE CI: PLAN SUGERIDO -->
+    <div class="pg" id="pg-sugerido">
+      <div class="ttl">Plan Sugerido</div>
+      <div class="sub">Sistema analiza el historial y propone el plan del próximo mes</div>
+      <div class="card" style="margin-bottom:11px">
+        <div class="ct">Configurar</div>
+        <div class="row2" style="margin-bottom:9px">
+          <div class="fg"><label class="fl">Mes a planificar</label>
+            <select class="sel" id="sug-mes" style="margin-bottom:0">
+              <option value="enero">Enero</option><option value="febrero">Febrero</option><option value="marzo">Marzo</option><option value="abril">Abril</option><option value="mayo">Mayo</option><option value="junio">Junio</option><option value="julio">Julio</option><option value="agosto">Agosto</option><option value="septiembre">Septiembre</option><option value="octubre" selected>Octubre</option><option value="noviembre">Noviembre</option><option value="diciembre">Diciembre</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">Zona</label>
+            <select class="sel" id="sug-zona" style="margin-bottom:0">
+              <option value="">Todas</option><option value="NORTE">Norte</option><option value="CENTRO">Centro</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-am" onclick="generarPlanSugerido()" id="btn-generar">Generar Plan Sugerido</button>
+      </div>
+      <div id="sug-kpis" class="kpis" style="display:none;margin-bottom:11px"></div>
+      <div id="sug-resultado" style="display:none">
+        <div class="card" style="margin-bottom:11px">
+          <div class="ct">
+            <span id="sug-count">Farmacias Sugeridas</span>
+            <div style="display:flex;gap:7px">
+              <button class="btn-sm btn-am-sm" onclick="confirmarPlan()">✓ Cargar Plan</button>
+              <button class="btn-sm btn-az-sm" onclick="exportarSugerido()">↓ CSV</button>
+            </div>
+          </div>
+          <div style="font-size:11px;color:rgba(255,255,255,.35);margin-bottom:9px">Toca X para quitar · Agrega extras con justificación abajo</div>
+          <div id="sug-lista"></div>
+        </div>
+        <div class="card" style="margin-bottom:11px">
+          <div class="ct">Agregar Farmacia Extra</div>
+          <div style="font-size:10px;color:rgba(255,255,255,.35);margin-bottom:8px">Solo para emergencias, siniestros o cambios especiales — motivo obligatorio</div>
+          <div class="row2" style="margin-bottom:8px">
+            <div class="fg"><label class="fl">Farmacia</label><input class="fi" id="sug-farm" placeholder="KIELSA 099" style="text-transform:uppercase;margin-bottom:0"></div>
+            <div class="fg"><label class="fl">Auditor</label><input class="fi" id="sug-aud" placeholder="Nombre auditor" style="margin-bottom:0"></div>
+          </div>
+          <div class="fg" style="margin-bottom:8px">
+            <label class="fl">Motivo</label>
+            <select class="sel" id="sug-motivo" style="margin-bottom:6px"><option value="">Seleccionar...</option><option>Emergencia operativa</option><option>Siniestro</option><option>Cambio de administracion</option><option>Solicitud gerencia</option><option>Seguimiento especial</option><option>Otro</option></select>
+            <textarea class="fi" id="sug-obs" rows="2" placeholder="Detalle..." style="resize:none;margin-bottom:0"></textarea>
+          </div>
+          <button class="btn-sm btn-az-sm" onclick="agregarExtra()">+ Agregar</button>
+        </div>
+        <div class="card">
+          <div class="ct">Resumen por Auditor</div>
+          <div id="sug-resumen"></div>
+        </div>
+      </div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--am);font-weight:700;margin:10px 0 6px">O carga plan desde Excel (modo tradicional)</div>
+      <div style="border:1px dashed rgba(255,255,255,.15);border-radius:9px;padding:14px;text-align:center;cursor:pointer" onclick="document.getElementById('fi-excel-sug').click()">
+        <div style="font-size:20px;margin-bottom:3px">📊</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.35)"><strong style="color:var(--am)">Selecciona</strong> el Excel</div>
+        <input type="file" id="fi-excel-sug" accept=".xlsx,.xls" style="display:none" onchange="cargarExcel(this)">
+      </div>
+    </div>
+
+    <!-- RESULTADOS -->
+    <div class="pg" id="pg-resultados">
+      <div class="ttl">Resultados</div><div class="sub" id="res-sub">–</div>
+      <div class="kpis" id="res-kpis"></div>
+      <div id="res-list"><div class="empty">Cargando...</div></div>
+    </div>
+
+    <!-- OTROS AJUSTES -->
+    <div class="pg" id="pg-ajustes">
+      <div class="ttl">Otros Ajustes</div>
+      <div class="sub">Fuera de política, dañados, dirigidos y otros</div>
+      <div class="card" style="margin-bottom:11px">
+        <div class="ct">Cargar ajustes desde Excel</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.4);margin-bottom:8px">
+          Columnas: <strong style="color:rgba(255,255,255,.7)">FARMACIA | MES | AÑO | TIPO_AJUSTE | MONTO | DESCRIPCION</strong><br>
+          Tipos válidos: Dañados dirigidos · Fuera de Política (vencidos) · Ajustes dirigidos · No compensatorios · Sin efecto cobro (aut. GG)
+        </div>
+        <div style="border:1px dashed rgba(255,255,255,.15);border-radius:9px;padding:12px;text-align:center;cursor:pointer;margin-bottom:7px" onclick="document.getElementById('fi-ajustes').click()">
+          <div style="font-size:18px;margin-bottom:2px">📋</div>
+          <div style="font-size:11px;color:rgba(255,255,255,.4)"><strong style="color:var(--am)">Selecciona</strong> el Excel de ajustes</div>
+          <input type="file" id="fi-ajustes" accept=".xlsx,.xls" style="display:none" onchange="cargarAjustes(this)">
+        </div>
+        <div id="ajustes-status" style="font-size:11px;color:rgba(255,255,255,.4)"></div>
+      </div>
+      <div class="card">
+        <div class="ct">
+          <span>Ajustes registrados</span>
+          <select id="ajustes-mes-fil" onchange="loadAjustes()" style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:7px;color:#fff;font-size:11px;padding:3px 8px;font-family:inherit">
+            <option value="">Todos los meses</option>
+            <option value="enero">Enero</option><option value="febrero">Febrero</option><option value="marzo">Marzo</option><option value="abril">Abril</option><option value="mayo">Mayo</option><option value="junio">Junio</option><option value="julio">Julio</option><option value="agosto">Agosto</option><option value="septiembre">Septiembre</option>
+          </select>
+        </div>
+        <div id="ajustes-lista"><div class="empty">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- AUDITORES -->
+    <div class="pg" id="pg-usuarios">
+      <div class="ttl" id="usr-ttl">Auditores</div><div class="sub">Gestión de accesos</div>
+      <div class="card">
+        <div class="ct">Nuevo Usuario</div>
+        <div class="row2" style="margin-bottom:9px">
+          <div class="fg"><label class="fl">Nombre</label><input class="fi" id="nu-nom" placeholder="Nombre completo"></div>
+          <div class="fg"><label class="fl">PIN</label><input class="fi" id="nu-pin" type="text" placeholder="Se genera al escribir nombre"></div>
+        </div>
+        <div class="row2" style="margin-bottom:9px">
+          <div class="fg"><label class="fl">Perfil</label>
+            <select class="sel" id="nu-perfil" onchange="toggleUsr()" style="margin-bottom:0">
+              <option value="AUDITOR">Auditor</option>
+              <option value="JEFE_CI">Jefe CI Campo</option>
+            </select>
+          </div>
+          <div class="fg"><label class="fl">País</label>
+            <select class="sel" id="nu-pais" style="margin-bottom:0">
+              <option value="HONDURAS">Honduras</option><option value="GUATEMALA">Guatemala</option><option value="EL SALVADOR">El Salvador</option><option value="NICARAGUA">Nicaragua</option><option value="COSTA RICA">Costa Rica</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" id="nu-zona-wrap" style="margin-bottom:9px">
+          <label class="fl">Zona</label>
+          <select class="sel" id="nu-zona" style="margin-bottom:0"><option value="">Todas</option><option value="NORTE">Norte</option><option value="CENTRO">Centro</option></select>
+        </div>
+        <button class="btn btn-am" onclick="crearUsuario()">Crear Usuario</button>
+      </div>
+      <div class="card">
+        <div class="ct"><span>Usuarios activos</span><button class="btn-sm btn-az-sm" onclick="loadUsuarios()">↺</button></div>
+        <div id="usr-list"><div class="empty">Cargando...</div></div>
+      </div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="pg" id="pg-admin">
+      <div class="ttl">Admin</div>
+      <div class="card">
+        <a href="index.html" style="display:block;text-align:center;background:var(--az);color:#fff;padding:12px;border-radius:9px;font-weight:800;text-decoration:none;font-size:13px">Abrir Dashboard Completo</a>
+      </div>
+      <div class="card">
+        <div class="ct">Tasas USD</div>
+        <div class="row2" style="margin-bottom:9px">
+          <div><label class="fl">HN (L. por $1)</label><input class="fi" id="t-hn" type="number" value="25.2"></div>
+          <div><label class="fl">GT (Q por $1)</label><input class="fi" id="t-gt" type="number" value="7.8"></div>
+          <div><label class="fl">NI (C$ por $1)</label><input class="fi" id="t-ni" type="number" value="36.8"></div>
+          <div><label class="fl">CR (₡ por $1)</label><input class="fi" id="t-cr" type="number" value="520"></div>
+        </div>
+        <button class="btn-sm btn-az-sm" onclick="guardarTasas()">Guardar Tasas</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL RESULTADO AUDITOR -->
+<div class="modal" id="modal-res">
+  <div class="mbox">
+    <div class="mhandle"></div>
+    <div class="mttl" id="m-ttl">Registrar Resultado</div>
+    <div class="msub" id="m-sub"></div>
+    <input type="hidden" id="m-pid"><input type="hidden" id="m-farm">
+    <input type="hidden" id="m-cat"><input type="hidden" id="m-venta"><input type="hidden" id="m-tol"><input type="hidden" id="m-res-id">
+    <div class="est-btns">
+      <button class="eb on-ej" onclick="setEst('EJECUTADO',this)">Ejecutado</button>
+      <button class="eb" onclick="setEst('NO EJECUTADO',this)">No ejecutado</button>
+    </div>
+    <div id="form-res">
+      <div class="shdr">Tiempos de ejecución</div>
+      <div style="margin-bottom:9px"><label class="fl">Inicio Escaneo</label>
+        <div class="hora-row"><input class="fi" id="f-t1" type="datetime-local" style="margin-bottom:0"><button class="btn-ahora" onclick="setAhora('f-t1')">Ahora</button></div>
+      </div>
+      <div style="margin-bottom:9px"><label class="fl">Fin Escaneo</label>
+        <div class="hora-row"><input class="fi" id="f-t2" type="datetime-local" style="margin-bottom:0"><button class="btn-ahora" onclick="setAhora('f-t2')">Ahora</button></div>
+      </div>
+      <div style="margin-bottom:9px"><label class="fl">Inicio Búsqueda Diferencias</label>
+        <div class="hora-row"><input class="fi" id="f-t3" type="datetime-local" style="margin-bottom:0"><button class="btn-ahora" onclick="setAhora('f-t3')">Ahora</button></div>
+      </div>
+      <div style="margin-bottom:9px"><label class="fl">Fin Búsqueda Diferencias</label>
+        <div class="hora-row"><input class="fi" id="f-t4" type="datetime-local" style="margin-bottom:0"><button class="btn-ahora" onclick="setAhora('f-t4')">Ahora</button></div>
+      </div>
+      <div style="margin-bottom:9px"><label class="fl">Hora Aplicación Ajustes</label>
+        <div class="hora-row"><input class="fi" id="f-t5" type="datetime-local" style="margin-bottom:0"><button class="btn-ahora" onclick="setAhora('f-t5')">Ahora</button></div>
+      </div>
+      <div class="shdr">Inventario</div>
+      <div class="row2" style="margin-bottom:9px">
+        <div class="fg"><label class="fl">Total SKU</label><input class="fi" id="f-sku" type="text" inputmode="numeric" placeholder="0"></div>
+        <div class="fg"><label class="fl">Total Unidades</label><input class="fi" id="f-uni" type="text" inputmode="numeric" placeholder="0"></div>
+      </div>
+      <div class="shdr">Resultado</div>
+      <div class="row2" style="margin-bottom:9px">
+        <div class="fg"><label class="fl">Faltante (L.)</label><input class="fi" id="f-fal" type="text" inputmode="decimal" placeholder="0.00" oninput="calcAuto()" onblur="if(this.value.trim())this.value=fmtNum(parseNum(this.value));"></div>
+        <div class="fg"><label class="fl">Sobrante (L.)</label><input class="fi" id="f-sob" type="text" inputmode="decimal" placeholder="0.00" oninput="calcAuto()" onblur="if(this.value.trim())this.value=fmtNum(parseNum(this.value));"></div>
+      </div>
+      <div class="row2" style="margin-bottom:9px">
+        <div class="fg"><label class="fl">Neto (automático)</label><input class="fi" id="f-net" type="text" value="0.00" style="opacity:.6;font-weight:800" readonly></div>
+        <div class="fg"><label class="fl">Falt. Tolerable (auto)</label><input class="fi" id="f-tol-vis" type="number" value="0" style="opacity:.6" readonly></div>
+      </div>
+      <div class="fg" style="margin-bottom:9px">
+        <label class="fl">Categoría</label><input class="fi" id="f-cat-vis" value="–" style="opacity:.6;font-weight:800;text-align:center;margin-bottom:0" readonly>
+      </div>
+      <div class="cond-result">
+        <div class="cond-lbl">Condición PDV (automática)</div>
+        <div class="cond-val" id="cond-auto">–</div>
+        <div class="cond-pct" id="cond-pct">Ingresa faltante y sobrante</div>
+      </div>
+      <div class="fg" style="margin-bottom:13px"><label class="fl">Observaciones</label><textarea class="fi" id="f-obs" rows="2" placeholder="Notas, incidencias..." style="resize:none"></textarea></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <button class="btn" style="background:rgba(8,145,178,.2);border:1px solid rgba(8,145,178,.3);color:var(--cy);flex:1;font-weight:800" id="btn-borrador" onclick="guardarRes('BORRADOR')">Borrador</button>
+      <button class="btn btn-am" style="flex:1" id="btn-final" onclick="guardarRes('ENVIADO')">Envío Final</button>
+    </div>
+    <button style="width:100%;padding:10px;background:none;border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:12px;cursor:pointer;font-family:inherit;color:rgba(255,255,255,.4)" onclick="closeModal('modal-res')">Cancelar</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR ASIGNACION -->
+<div class="modal" id="modal-edit">
+  <div class="mbox">
+    <div class="mhandle"></div>
+    <div class="mttl">Editar Asignación</div>
+    <div class="msub" id="me-sub"></div>
+    <input type="hidden" id="me-id">
+    <div class="fg" style="margin-bottom:9px"><label class="fl">Farmacia</label><input class="fi" id="me-farm" style="text-transform:uppercase"></div>
+    <div class="fg" style="margin-bottom:9px"><label class="fl">Auditor</label><input class="fi" id="me-aud"></div>
+    <div class="row2" style="margin-bottom:9px">
+      <div class="fg"><label class="fl">Fecha Asignada</label><input class="fi" id="me-fecha" type="date" style="margin-bottom:0"></div>
+      <div class="fg"><label class="fl">Fecha Reprogramación</label><input class="fi" id="me-fecha-rep" type="date" style="margin-bottom:0"></div>
+    </div>
+    <div style="background:rgba(255,209,0,.08);border:1px solid rgba(255,209,0,.2);border-radius:8px;padding:8px 12px;margin-bottom:9px;font-size:10px;color:rgba(255,209,0,.7)">
+      Si reprogramas, se reemplaza la fecha original en el plan del auditor
+    </div>
+    <div class="row2" style="margin-bottom:13px">
+      <div class="fg"><label class="fl">Categoría</label>
+        <select class="sel" id="me-cat" style="margin-bottom:0"><option value="A">A</option><option value="B">B</option><option value="C">C</option></select>
+      </div>
+      <div class="fg"><label class="fl">Tipo Actividad</label>
+        <select class="sel" id="me-tipo" style="margin-bottom:0"><option>INV. GENERAL</option><option>SEGUIMIENTO</option><option>SPOT CHECK</option></select>
+      </div>
+    </div>
+    <div class="row2" style="margin-bottom:13px">
+      <div class="fg"><label class="fl">Venta Promedio</label><input class="fi" id="me-venta" type="number" step="0.01" style="margin-bottom:0"></div>
+      <div class="fg"><label class="fl">Falt. Tolerable (auto)</label><input class="fi" id="me-tol" type="number" style="margin-bottom:0;opacity:.6" readonly></div>
+    </div>
+    <button class="btn btn-am" onclick="guardarEdit()" style="margin-bottom:8px">Guardar</button>
+    <button class="btn" style="background:rgba(215,43,63,.2);border:1px solid rgba(215,43,63,.3);color:#ff6b6b;margin-bottom:8px" onclick="eliminarEdit()">Eliminar asignación</button>
+    <button style="width:100%;padding:10px;background:none;border:1px solid rgba(255,255,255,.1);border-radius:9px;font-size:12px;cursor:pointer;font-family:inherit;color:rgba(255,255,255,.4)" onclick="closeModal('modal-edit')">Cancelar</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SB='https://vgpvskeeurrihgareepv.supabase.co',KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZncHZza2VldXJyaWhnYXJlZXB2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk1ODIyODcsImV4cCI6MjEwNTE1ODI4N30.0Df9YLzho0CC1ZXy6uB_KQZ4KQliaBd5Ot3bEmvzbPk';
+const HDR={'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json','Prefer':'return=representation'};
+const FARM_MAP={"KIELSA 003": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "A", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 058": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "A", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 066": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "A", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 015": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 020": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 207": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "A", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 010": {"auditor": "Monica Andrade", "categoria": "A", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 011": {"auditor": "Oscar Melendez", "categoria": "A", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 013": {"auditor": "Monica Andrade", "categoria": "A", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 021": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 025": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 026": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 031": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 089": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 097": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 098": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 105": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 107": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 110": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 080": {"auditor": "Ortwin Maltez", "categoria": "A", "ciudad": "CHOLOMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 129": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 043": {"auditor": "Oscar Melendez", "categoria": "A", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 135": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 158": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 189": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 604": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "A", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 070": {"auditor": "Fanny Ramirez", "categoria": "A", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 137": {"auditor": "Ortwin Maltez", "categoria": "A", "ciudad": "CHOLOMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 087": {"auditor": "Jamil Flores", "categoria": "A", "ciudad": "EL PROGRESO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 081": {"auditor": "Daniel Tinoco", "categoria": "A", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 083": {"auditor": "Monica Andrade", "categoria": "A", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 214": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 217": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 288": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 233": {"auditor": "Tulio Lopez", "categoria": "A", "ciudad": "COLINAS", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 115": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "A", "ciudad": "VILLANUEVA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 149": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "COPAN FLORIDA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 114": {"auditor": "Nelsy Sarmiento", "categoria": "A", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 161": {"auditor": "Jamil Flores", "categoria": "A", "ciudad": "MORAZAN", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 166": {"auditor": "Daniel Tinoco", "categoria": "A", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 148": {"auditor": "Nelsy Sarmiento", "categoria": "A", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 009": {"auditor": "Karina Gómez", "categoria": "A", "ciudad": "TOCOA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 180": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "COPAN RUINAS", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 235": {"auditor": "Monica Andrade", "categoria": "A", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 079": {"auditor": "Nelsy Sarmiento", "categoria": "A", "ciudad": "SAN ESTEBAN", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 104": {"auditor": "Tulio Lopez", "categoria": "A", "ciudad": "SANTA BARBARA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 292": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "A", "ciudad": "VALLE DE ANGELES", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 246": {"auditor": "Karina Gómez", "categoria": "B", "ciudad": "BONITO ORIENTAL", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 002": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 050": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 053": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 085": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 295": {"auditor": "Nelsy Sarmiento", "categoria": "B", "ciudad": "CAMPAMENTO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 035": {"auditor": "Monica Andrade", "categoria": "B", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 036": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "CHOLOMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 102": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 045": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "VILLANUEVA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 145": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 047": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "VILLANUEVA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 168": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 131": {"auditor": "Karina Gómez", "categoria": "B", "ciudad": "OLANCHITO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 260": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 057": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 188": {"auditor": "Tulio Lopez", "categoria": "B", "ciudad": "AZACUALPA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 033": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "EL PROGRESO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 008": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 172": {"auditor": "Karina Gómez", "categoria": "B", "ciudad": "OLANCHITO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 067": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 090": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 225": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "CHOLOMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 163": {"auditor": "Nelsy Sarmiento", "categoria": "B", "ciudad": "CATACAMAS", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 082": {"auditor": "Monica Andrade", "categoria": "B", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 112": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 088": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "EL PROGRESO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 171": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 264": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 215": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "CUCUYAGUA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 303": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 006": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 134": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 007": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 278": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "GRACIAS", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 022": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 028": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 039": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 041": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 113": {"auditor": "Tulio Lopez", "categoria": "B", "ciudad": "LAS VEGAS", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 169": {"auditor": "Nelsy Sarmiento", "categoria": "B", "ciudad": "CATACAMAS", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 250": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "CHOLOMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 285": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "EL PROGRESO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 210": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "LA LIMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 048": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 243": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 064": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 096": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 139": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 109": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 111": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 117": {"auditor": "Karina Gómez", "categoria": "B", "ciudad": "SABA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 124": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 132": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 293": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "CHOLOMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 259": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 141": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 143": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 144": {"auditor": "Monica Andrade", "categoria": "B", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 146": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 256": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 138": {"auditor": "Dunia Arita", "categoria": "A", "ciudad": "LA ENTRADA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 151": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 153": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 182": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 155": {"auditor": "Tulio Lopez", "categoria": "B", "ciudad": "PEÑA BLANCA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 185": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 187": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 177": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "INTIBUCA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 038": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "LA ENTRADA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 213": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 605": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 018": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 282": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 046": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 228": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "OMOA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 130": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "LA ENTRADA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 179": {"auditor": "Karina Gómez", "categoria": "B", "ciudad": "SONAGUERA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 294": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "LA LABOR", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 274": {"auditor": "Tulio Lopez", "categoria": "B", "ciudad": "QUIMISTAN", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 040": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "PUERTO CORTES", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 276": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "SANTA RITA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 205": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "VILLANUEVA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 072": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 208": {"auditor": "Monica Andrade", "categoria": "B", "ciudad": "ROATAN", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 065": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "TELA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 211": {"auditor": "Nelsy Sarmiento", "categoria": "B", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 232": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "LEPAERA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 216": {"auditor": "Nelsy Sarmiento", "categoria": "B", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 219": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "COFRADIA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 221": {"auditor": "Monica Andrade", "categoria": "B", "ciudad": "ROATAN", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 099": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 077": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "TELA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 071": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "PUERTO CORTES", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 142": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 227": {"auditor": "Monica Andrade", "categoria": "B", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 231": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 181": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "OCOTEPEQUE", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 281": {"auditor": "Tulio Lopez", "categoria": "B", "ciudad": "SAN NICOLAS", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 238": {"auditor": "Nelsy Sarmiento", "categoria": "B", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 239": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "TALANGA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 147": {"auditor": "Fanny Ramirez", "categoria": "C", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 241": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "VALLE DE ANGELES", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 160": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "MARCALA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 060": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "SIGUATEPEQUE", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 074": {"auditor": "Karina Gómez", "categoria": "B", "ciudad": "TOCOA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 602": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "B", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 176": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "SAN MARCOS DE OCOTEPEQUE", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 061": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "SIGUATEPEQUE", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 254": {"auditor": "Monica Andrade", "categoria": "B", "ciudad": "JUTIAPA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 170": {"auditor": "Fanny Ramirez", "categoria": "C", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 069": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "SIGUATEPEQUE", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 234": {"auditor": "Jamil Flores", "categoria": "B", "ciudad": "TELA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 123": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "SIGUATEPEQUE", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 242": {"auditor": "Oscar Melendez", "categoria": "B", "ciudad": "SIGUATEPEQUE", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 272": {"auditor": "Daniel Tinoco", "categoria": "B", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 059": {"auditor": "Tulio Lopez", "categoria": "B", "ciudad": "SANTA BARBARA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 197": {"auditor": "Fanny Ramirez", "categoria": "C", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 120": {"auditor": "Tulio Lopez", "categoria": "B", "ciudad": "SANTA CRUZ DE YOJOA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 202": {"auditor": "Karina Gómez", "categoria": "B", "ciudad": "TRUJILLO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 195": {"auditor": "Ortwin Maltez", "categoria": "B", "ciudad": "PUERTO CORTES", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 030": {"auditor": "Nelsy Sarmiento", "categoria": "B", "ciudad": "SAN FRANCISCO DE LA PAZ", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 298": {"auditor": "Fanny Ramirez", "categoria": "C", "ciudad": "CHOLUTECA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 297": {"auditor": "Fanny Ramirez", "categoria": "C", "ciudad": "MARCOVIA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 307": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "B", "ciudad": "ZAMORANO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 004": {"auditor": "Monica Andrade", "categoria": "C", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 005": {"auditor": "Monica Andrade", "categoria": "C", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 591": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 263": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "EL NEGRITO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 032": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "EL PROGRESO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 092": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "SAN MARCOS DE OCOTEPEQUE", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 042": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "VILLANUEVA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 012": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 017": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 037": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 091": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 140": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 204": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 226": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 248": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 068": {"auditor": "Monica Andrade", "categoria": "C", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 220": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 073": {"auditor": "Monica Andrade", "categoria": "C", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 247": {"auditor": "Ortwin Maltez", "categoria": "C", "ciudad": "CHOLOMA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 086": {"auditor": "Daniel Tinoco", "categoria": "C", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 196": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "EL PROGRESO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 019": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 052": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 100": {"auditor": "Daniel Tinoco", "categoria": "C", "ciudad": "EL PARAISO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 056": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 075": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 224": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "EL PROGRESO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 094": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 257": {"auditor": "Nelsy Sarmiento", "categoria": "C", "ciudad": "DULCE NOMBRE DE CULMI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 286": {"auditor": "Karina Gómez", "categoria": "C", "ciudad": "OLANCHITO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 284": {"auditor": "Tulio Lopez", "categoria": "C", "ciudad": "MACUELIZO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 252": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "COMAYAGUA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 106": {"auditor": "Dunia Arita", "categoria": "A", "ciudad": "SANTA ROSA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 305": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "MONJARAS", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 126": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "NACAOME", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 136": {"auditor": "Monica Andrade", "categoria": "C", "ciudad": "EL PORVENIR", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 103": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "SAN LORENZO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 222": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 301": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 154": {"auditor": "Monica Andrade", "categoria": "C", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 116": {"auditor": "Nelsy Sarmiento", "categoria": "C", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 016": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 206": {"auditor": "Karina Gómez", "categoria": "C", "ciudad": "SABA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 173": {"auditor": "Nelsy Sarmiento", "categoria": "C", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 175": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "SANTA ROSA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 271": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "JESUS DE OTORO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 055": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 304": {"auditor": "Dunia Arita", "categoria": "B", "ciudad": "SANTA ROSA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 122": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 125": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 127": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 152": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 157": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 164": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 165": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 167": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 178": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 183": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 184": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 223": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "SAN LORENZO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 186": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 199": {"auditor": "Nelsy Sarmiento", "categoria": "C", "ciudad": "JUTICALPA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 190": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 201": {"auditor": "Daniel Tinoco", "categoria": "C", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 236": {"auditor": "Karina Gómez", "categoria": "C", "ciudad": "SONAGUERA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 290": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "LA ESPERANZA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 209": {"auditor": "Monica Andrade", "categoria": "C", "ciudad": "LA CEIBA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 191": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 262": {"auditor": "Daniel Tinoco", "categoria": "C", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 192": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 193": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 198": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 200": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 128": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "LA PAZ", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 240": {"auditor": "Fanny Ramirez", "categoria": "B", "ciudad": "SAN LORENZO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 078": {"auditor": "Ortwin Maltez", "categoria": "C", "ciudad": "PUERTO CORTES", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 230": {"auditor": "Daniel Tinoco", "categoria": "C", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 237": {"auditor": "Tulio Lopez", "categoria": "C", "ciudad": "SAN LUIS", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 108": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "TELA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 279": {"auditor": "Ortwin Maltez", "categoria": "C", "ciudad": "CUYAMEL", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 051": {"auditor": "Karina Gómez", "categoria": "C", "ciudad": "TOCOA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 118": {"auditor": "Ortwin Maltez", "categoria": "C", "ciudad": "PUERTO CORTES", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 174": {"auditor": "Ortwin Maltez", "categoria": "C", "ciudad": "PUERTO CORTES", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 162": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "SANTA ROSA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 001": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 024": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 270": {"auditor": "Daniel Tinoco", "categoria": "C", "ciudad": "DANLI", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 277": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "TELA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 119": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "YORO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 229": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "SANTA ROSA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 280": {"auditor": "Tulio Lopez", "categoria": "C", "ciudad": "SANTA BARBARA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 054": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 121": {"auditor": "Jamil Flores", "categoria": "C", "ciudad": "YORO", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 212": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 306": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "SIGUATEPEQUE", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 251": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "SANTA ROSA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 309": {"auditor": "Nelsy Sarmiento", "categoria": "C", "ciudad": "SAN FRANCISCO DE BECERRA", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 218": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 063": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 076": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 255": {"auditor": "Dunia Arita", "categoria": "C", "ciudad": "SANTA ROSA", "zona": "NORTE", "localidad": "FORANEA"}, "KIELSA 133": {"auditor": "Fanny Ramirez", "categoria": "C", "ciudad": "SAN MARCOS DE COLON", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 268": {"auditor": "Oscar Melendez", "categoria": "C", "ciudad": "VILLA DE SAN ANTONIO", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 299": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 296": {"auditor": "Nelsy Sarmiento", "categoria": "C", "ciudad": "SAN FRANCISCO DE LA PAZ", "zona": "CENTRO", "localidad": "FORANEA"}, "KIELSA 308": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}, "KIELSA 093": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 101": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 283": {"auditor": "EQUIPO SAN PEDRO SULA", "categoria": "C", "ciudad": "SAN PEDRO SULA", "zona": "NORTE", "localidad": "LOCAL"}, "KIELSA 590": {"auditor": "EQUIPO TEGUCIGALPA", "categoria": "C", "ciudad": "TEGUCIGALPA", "zona": "CENTRO", "localidad": "LOCAL"}};
+const OM={enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
+let USER=null,EST='EJECUTADO';
+let _att=0,_lock=0,_timer=null;
+
+const $=id=>document.getElementById(id);
+function s2h(s){return Array.from(s).map(c=>c.charCodeAt(0).toString(16).padStart(2,'0')).join('');}
+function toast(m,t=''){const e=$('toast');e.textContent=m;e.className='show '+(t||'');setTimeout(()=>e.className='',2800);}
+function closeModal(id){$(id).classList.remove('show');}
+function fmtDT(v){
+  if(!v||!v.trim())return null;
+  try{
+    // datetime-local gives YYYY-MM-DDTHH:MM, need YYYY-MM-DDTHH:MM:SS
+    const s=v.trim();
+    if(s.length===16)return s+':00';
+    if(s.length===19)return s;
+    return null;
+  }catch(e){return null;}
+}
+function setAhora(id){const n=new Date();const pad=x=>String(x).padStart(2,'0');$(id).value=`${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}T${pad(n.getHours())}:${pad(n.getMinutes())}`;}
+function fL(v){return'L. '+Math.abs(parseFloat(v)||0).toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+
+// Security
+document.addEventListener('contextmenu',e=>e.preventDefault());
+document.addEventListener('keydown',e=>{if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key))||(e.ctrlKey&&e.key==='U')){e.preventDefault();return false;}});
+function resetTimer(){clearTimeout(_timer);_timer=setTimeout(()=>{if(USER){alert('Sesion cerrada por inactividad.');logout();}},45*60*1000);}
+['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{if(USER)resetTimer();},{passive:true}));
+
+async function api(method,table,params='',body=null){
+  const url=`${SB}/rest/v1/${table}${params?'?'+params:''}`;
+  const r=await fetch(url,{method,headers:HDR,body:body?JSON.stringify(body):null});
+  if(!r.ok)throw new Error(await r.text());
+  return method==='DELETE'?null:r.json();
+}
+
+// ── MATRIZ CONDICION ─────────────────────────────────────────
+function calcCondicion(neto,venta,cat){
+  const c=(cat||'C').toUpperCase();
+  const lims={A:[1200,-1199,-1999,-24999],B:[770,-769,-3299,-13199],C:[450,-449,-1899,-7999]}[c]||[450,-449,-1899,-7999];
+  let cm;
+  if(neto>lims[0])cm='Fallas en procesos';
+  else if(neto>=lims[1])cm='Ideal';
+  else if(neto>=lims[2])cm='Tolerable';
+  else if(neto>=lims[3])cm='Alerta';
+  else cm='Critico';
+  if(!venta||venta===0)return{cond:cm,pct:0};
+  const pct=neto/venta;
+  let cp;
+  if(pct>0.0006)cp='Fallas en procesos';
+  else if(pct>=-0.0006)cp='Ideal';
+  else if(pct>=-0.0029)cp='Tolerable';
+  else if(pct>=-0.012)cp='Alerta';
+  else cp='Critico';
+  const sev={'Ideal':0,'Fallas en procesos':1,'Tolerable':2,'Alerta':3,'Critico':4,'Crítico':4};
+  const cond=sev[cm]>=sev[cp]?cm:cp;
+  return{cond,pct};
+}
+function calcFalTol(venta){return venta>0?Math.round(venta*-0.0006*100)/100:0;}
+const COND_COLOR={'Ideal':'#16a34a','Tolerable':'#0891B2','Alerta':'#E8720C','Critico':'#D72B3F','Crítico':'#D72B3F','Fallas en procesos':'#7C3AED','–':'#FFD100'};
+
+function fmtNum(v){
+  const n=parseFloat(v)||0;
+  const sign=n<0?'-':'';
+  return sign+Math.abs(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function parseNum(s){return parseFloat(String(s).replace(/,/g,''))||0;}
+
+function calcAuto(){
+  const fal=parseNum($('f-fal').value);
+  const sob=parseNum($('f-sob').value);
+  const net=sob-fal;
+  $('f-net').value=fmtNum(net);
+  const venta=parseNum($('m-venta').value)||parseFloat($('m-venta').value)||0;
+  const cat=$('m-cat').value||'C';
+  const {cond,pct}=calcCondicion(net,venta,cat);
+  $('cond-auto').textContent=cond;
+  $('cond-auto').style.color=COND_COLOR[cond]||'#FFD100';
+  $('cond-pct').textContent=venta>0?`${(pct*100).toFixed(2)}% de venta promedio`:'Sin venta promedio — usando criterio por monto';
+}
+
+// ── LOGIN ────────────────────────────────────────────────────
+async function doLogin(){
+  const nom=$('ln').value.trim(),pin=$('pin').value.trim(),err=$('lerr');
+  err.textContent='';
+  if(Date.now()<_lock){const m=Math.ceil((_lock-Date.now())/60000);err.textContent=`Bloqueado ${m} min.`;return;}
+  if(!nom){err.textContent='Ingresa tu nombre.';return;}
+  if(!pin){err.textContent='Ingresa tu PIN.';return;}
+  const admins={'4b69656c73612e61646d696e312b':'Oscar Munoz','4b69656c73612e61646d696e322b':'Rudy Betanco'};
+  const admNom=admins[s2h(pin)];
+  if(admNom&&nom.toLowerCase()===admNom.toLowerCase().replace('u','ú').replace(admNom.toLowerCase(),admNom.toLowerCase())){
+    USER={nombre:admNom,role:'ADMIN',pais:null,zona:null};_att=0;iniciarApp();return;
+  }
+  if(admNom){USER={nombre:admNom,role:'ADMIN',pais:null,zona:null};_att=0;iniciarApp();return;}
+  try{
+    const h=s2h(pin);
+    const data=await api('GET','usuarios_app',`pin_hash=eq.${h}&activo=eq.true`);
+    const u=data.find(d=>d.nombre.toLowerCase().trim()===nom.toLowerCase().trim());
+    if(!u){
+      _att++;
+      const rem=3-_att;
+      if(_att>=3){_lock=Date.now()+5*60*1000;_att=0;err.textContent='Bloqueado 5 minutos.';}
+      else err.textContent=`PIN incorrecto. ${rem} intento(s) restante(s).`;
+      $('pin').value='';return;
+    }
+    _att=0;
+    USER={nombre:u.nombre,role:u.perfil,pais:u.pais,zona:u.zona};
+    iniciarApp();
+  }catch(e){err.textContent='Error de conexion: '+e.message;}
+}
+async function checkPlanChanges(){
+  try{
+    const mes=new Date().toLocaleString('es-HN',{month:'long'}).toLowerCase();
+    const q=`mes=eq.${mes}&anio=eq.2026&auditor_nom=ilike.*${encodeURIComponent(USER.nombre)}*&order=updated_at.desc&limit=1`;
+    const data=await api('GET','plan_trabajo',q);
+    if(!data.length)return;
+    const last=data[0];
+    const key=`kielsa_plan_${USER.nombre}_${mes}`;
+    let stored;
+    try{stored=localStorage.getItem(key);}catch(e){}
+    const lastUpd=last.updated_at||last.created_at||'';
+    if(stored&&stored!==lastUpd){
+      showNotif(`Tu plan de ${mes} fue actualizado por el Jefe CI`);
+    }
+    try{localStorage.setItem(key,lastUpd);}catch(e){}
+  }catch(e){}
+}
+function showNotif(msg){
+  let n=document.getElementById('knotif');
+  if(!n){
+    n=document.createElement('div');n.id='knotif';
+    n.style.cssText='position:fixed;top:60px;left:50%;transform:translateX(-50%);background:#FFD100;color:#001040;padding:10px 20px;border-radius:12px;font-size:12px;font-weight:800;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.3);cursor:pointer;max-width:90vw;text-align:center';
+    n.onclick=()=>{n.style.display='none';loadPlan();};
+    document.body.appendChild(n);
+  }
+  n.textContent='🔔 '+msg+' — Toca para ver';
+  n.style.display='block';
+  setTimeout(()=>{if(n)n.style.display='none';},8000);
+}
+function logout(){clearTimeout(_timer);USER=null;$('login').style.display='flex';$('app').style.display='none';$('ln').value='';$('pin').value='';}
+function iniciarApp(){
+  resetTimer();
+  $('login').style.display='none';$('app').style.display='block';
+  $('tb-usr').textContent=USER.nombre;
+  buildTabs();
+  if(USER.role==='AUDITOR')checkPlanChanges();
+}
+
+// ── TABS ─────────────────────────────────────────────────────
+function buildTabs(){
+  const t=$('tabs');
+  if(USER.role==='AUDITOR'){
+    $('tb-ttl').textContent='Auditor';
+    t.innerHTML=`<div class="tab on" onclick="goTab('miplan',this)">Mi Plan</div>`;
+    goTab('miplan');
+  } else if(USER.role==='JEFE_CI'){
+    $('tb-ttl').textContent='Jefe CI';
+    t.innerHTML=`<div class="tab on" onclick="goTab('jefplan',this)">Plan</div><div class="tab" onclick="goTab('sugerido',this)">Sugerido</div><div class="tab" onclick="goTab('resultados',this)">Resultados</div><div class="tab" onclick="goTab('ajustes',this)">Ajustes</div><div class="tab" onclick="goTab('usuarios',this)">Auditores</div>`;
+    goTab('jefplan');
+  } else {
+    $('tb-ttl').textContent='Admin';
+    t.innerHTML=`<div class="tab on" onclick="goTab('jefplan',this)">Plan</div><div class="tab" onclick="goTab('sugerido',this)">Sugerido</div><div class="tab" onclick="goTab('resultados',this)">Resultados</div><div class="tab" onclick="goTab('ajustes',this)">Ajustes</div><div class="tab" onclick="goTab('usuarios',this)">Usuarios</div><div class="tab" onclick="goTab('admin',this)">Admin</div>`;
+    goTab('jefplan');
+  }
+}
+function goTab(id,btn){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  $('pg-'+id)?.classList.add('on');
+  if(btn)btn.classList.add('on');
+  else document.querySelectorAll(`.tab`).forEach(t=>{if(t.getAttribute('onclick')?.includes(`'${id}'`))t.classList.add('on');});
+  const m={miplan:loadPlan,jefplan:loadJefPlan,sugerido:loadPlanSugerido,resultados:loadResultados,ajustes:loadAjustes,usuarios:loadUsuarios};
+  if(m[id])m[id]();
+}
+
+// ── AUDITOR: MI PLAN ─────────────────────────────────────────
+async function loadPlan(){
+  const mes=$('sel-mes').value,list=$('plan-list');
+  list.innerHTML='<div class="empty">Cargando...</div>';
+  try{
+    const q=`mes=eq.${mes}&anio=eq.2026&auditor_nom=ilike.*${encodeURIComponent(USER.nombre)}*&order=fecha_asignacion.asc,farmacia_cod.asc`;
+    const data=await api('GET','plan_trabajo',q);
+    $('k-pend').textContent=data.filter(d=>d.estado==='PENDIENTE').length;
+    $('k-draft').textContent=data.filter(d=>d.estado==='BORRADOR').length;
+    $('k-ejec').textContent=data.filter(d=>d.estado==='EJECUTADO').length;
+    $('k-total').textContent=data.length;
+    $('plan-sub').textContent=`${mes.charAt(0).toUpperCase()+mes.slice(1)} 2026 · ${data.length} farmacias`;
+    if(!data.length){list.innerHTML='<div class="empty">Sin farmacias asignadas<br><small style="color:rgba(255,255,255,.2)">El Jefe CI debe cargar el plan</small></div>';return;}
+    const hoy=new Date().toISOString().split('T')[0];
+    list.innerHTML=data.map(d=>{
+      const st=d.estado;
+      const cls=st==='EJECUTADO'?'done':st==='BORRADOR'?'draft':'pend';
+      const stcls=st==='EJECUTADO'?'st-done':st==='BORRADOR'?'st-draft':'st-pend';
+      const stlbl=st==='EJECUTADO'?'Listo':st==='BORRADOR'?'Borrador':'Pendiente';
+      const fm=FARM_MAP[d.farmacia_cod]||{};
+      const cat=d.categoria||fm.categoria||'C';
+      const fecha=d.fecha_asignacion;
+      const esHoy=fecha===hoy;
+      let dateBlock='<div class="pi-date" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)"><div class="d-day">--</div><div class="d-mon">sin fecha</div></div>';
+      if(fecha){
+        const dd=new Date(fecha+'T00:00:00');
+        const dia=dd.getDate();
+        const mon=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'][dd.getMonth()];
+        const isPast=fecha<hoy&&st==='PENDIENTE';
+        const bg=esHoy?'var(--am)':isPast?'rgba(232,114,12,.2)':'rgba(255,255,255,.08)';
+        const tc=esHoy?'#001040':isPast?'var(--na)':'rgba(255,255,255,.7)';
+        dateBlock=`<div class="pi-date" style="background:${bg};color:${tc}">
+          ${esHoy?'<div style="font-size:8px;font-weight:800">HOY</div>':''}
+          <div class="d-day">${dia}</div>
+          <div class="d-mon">${mon}</div>
+          ${isPast?'<div style="font-size:8px">⏰</div>':''}
+        </div>`;
+      }
+      return`<div class="pi ${cls}" onclick="openModalRes(${d.id},'${d.farmacia_cod.replace(/'/g,"\\'")}',${d.venta_prom||0},${d.fal_tolerable||0},'${cat}')">
+        ${dateBlock}
+        <div class="pi-body">
+          <div class="pi-nom">${d.farmacia_cod} <span class="pi-cat cat-${cat}">${cat}</span></div>
+          <div class="pi-meta">${d.ciudad||''}${d.zona?' · '+d.zona:''}</div>
+          <div class="pi-jop">JOP: ${d.jop||'–'} · Sup: ${d.supervisor||'–'}</div>
+        </div>
+        <span class="pi-st ${stcls}">${stlbl}</span>
+      </div>`;
+    }).join('');
+  }catch(e){list.innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+
+// ── MODAL RESULTADO ──────────────────────────────────────────
+async function openModalRes(pid,farm,venta,tol,cat){
+  $('m-ttl').textContent=farm;
+  $('m-sub').textContent=`Cat. ${cat} · Venta prom: ${fL(venta)}`;
+  $('m-pid').value=pid;$('m-farm').value=farm;
+  $('m-cat').value=cat||'C';$('m-venta').value=venta||0;$('m-tol').value=tol||0;
+  $('m-res-id').value='';
+  $('f-tol-vis').value=fmtNum(tol||calcFalTol(venta));
+  $('f-cat-vis').value=cat||'C';
+  try{
+    const mes=$('sel-mes').value;
+    const ex=await api('GET','resultados',`farmacia_cod=eq.${encodeURIComponent(farm)}&mes=eq.${mes}&anio=eq.2026&auditor_nom=ilike.*${encodeURIComponent(USER.nombre)}*&order=created_at.desc&limit=1`);
+    if(ex.length){
+      const d=ex[0];$('m-res-id').value=d.id;
+      $('f-fal').value=fmtNum(d.faltante||0);$('f-sob').value=fmtNum(d.sobrante||0);
+      $('f-sku').value=d.total_sku||0;$('f-uni').value=d.total_unidades||0;$('f-obs').value=d.observaciones||'';
+      ['f-t1','f-t2','f-t3','f-t4','f-t5'].forEach((id,i)=>{
+        const col=['hora_inicio_escaneo','hora_fin_escaneo','hora_inicio_diferencias','hora_fin_diferencias','hora_ajustes'][i];
+        $(id).value=d[col]?d[col].substring(0,16):'';
+      });
+    } else {
+      ['f-fal','f-sob','f-sku','f-uni'].forEach(id=>$(id).value='0');
+      ['f-t1','f-t2','f-t3','f-t4','f-t5'].forEach(id=>$(id).value='');
+      $('f-obs').value='';
+    }
+  }catch(e){}
+  EST='EJECUTADO';
+  document.querySelectorAll('.est-btns .eb').forEach(b=>b.classList.remove('on-ej','on-no'));
+  document.querySelector('.est-btns .eb').classList.add('on-ej');
+  $('form-res').style.display='block';
+  calcAuto();
+  $('modal-res').classList.add('show');
+}
+function setEst(e,btn){
+  EST=e;
+  document.querySelectorAll('.est-btns .eb').forEach(b=>b.classList.remove('on-ej','on-no'));
+  btn.classList.add(e==='EJECUTADO'?'on-ej':'on-no');
+  $('form-res').style.display=e==='EJECUTADO'?'block':'none';
+}
+
+async function guardarRes(estado){
+  const btnId=estado==='BORRADOR'?'btn-borrador':'btn-final';
+  const btn=$(btnId);const orig=btn.textContent;btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
+  try{
+    const pid=$('m-pid').value,farm=$('m-farm').value,mes=$('sel-mes').value;
+    const venta=parseFloat($('m-venta').value)||0,cat=$('m-cat').value||'C';
+    const fal=parseNum($('f-fal').value),sob=parseNum($('f-sob').value),net=parseNum($('f-net').value);
+    const tol=calcFalTol(venta);
+    const {cond}=calcCondicion(net,venta,cat);
+    const planSt=estado==='ENVIADO'?'EJECUTADO':'BORRADOR';
+    if(pid)await api('PATCH','plan_trabajo',`id=eq.${pid}`,{estado:planSt});
+    if(EST==='EJECUTADO'){
+      const payload={
+        farmacia_cod:farm,farmacia_nom:farm,auditor_nom:USER.nombre,
+        mes,anio:2026,fecha_real:new Date().toISOString().split('T')[0]||null,
+        faltante:fal,sobrante:sob,neto:net,fal_tolerable:tol,
+        dentro_tolerable:!!(fal<=Math.abs(tol)),venta_prom:venta,
+        pct_venta:venta>0?Math.round(net/venta*10000)/10000:0,
+        categoria:cat,matriz_revision:cond,pais:USER.pais||'HONDURAS',
+        hora_inicio_escaneo:fmtDT($('f-t1').value),hora_fin_escaneo:fmtDT($('f-t2').value),
+        hora_inicio_diferencias:fmtDT($('f-t3').value),hora_fin_diferencias:fmtDT($('f-t4').value),
+        hora_ajustes:fmtDT($('f-t5').value),
+        total_sku:parseInt(($('f-sku').value||'0').replace(/,/g,''))||0,total_unidades:parseInt(($('f-uni').value||'0').replace(/,/g,''))||0,
+        aplica_bono:false,bonificacion:'',observaciones:$('f-obs').value?.trim()||null,estado
+      };
+      const resId=$('m-res-id').value;
+      // Clean null datetime fields to avoid postgres errors
+      Object.keys(payload).forEach(k=>{if(payload[k]===null&&k.startsWith('hora_'))delete payload[k];});
+      if(resId)await api('PATCH','resultados',`id=eq.${resId}`,payload);
+      else await api('POST','resultados',null,payload);
+      // Si sale mal → ofrecer PDF
+      if(estado==='ENVIADO'&&['Critico','Crítico','Alerta'].includes(cond)){
+        setTimeout(()=>{
+          if(confirm(`Farmacia con condicion ${cond}. Deseas generar el informe PDF para adjuntar?`)){
+            generarInformePDF(farm,mes,fal,sob,net,cond,venta,cat,$('f-obs').value);
+          }
+        },500);
+      }
+    }
+    closeModal('modal-res');toast(estado==='BORRADOR'?'Borrador guardado':'Resultado enviado',estado==='BORRADOR'?'info':'ok');loadPlan();
+  }catch(e){toast('Error: '+e.message,'err');}
+  finally{btn.innerHTML=orig;btn.disabled=false;}
+}
+
+function generarInformePDF(farm,mes,fal,sob,net,cond,venta,cat,obs){
+  const condColor={'Critico':'#D72B3F','Crítico':'#D72B3F','Alerta':'#E8720C','Tolerable':'#0891B2','Ideal':'#16a34a','Fallas en procesos':'#7C3AED'}[cond]||'#666';
+  const pct=venta>0?(net/venta*100).toFixed(4):'N/A';
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>Informe CI - ${farm}</title>
+  <style>body{font-family:Segoe UI,Arial,sans-serif;margin:24px;color:#1A2340;font-size:12px}
+  .logo{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:14px;border-bottom:3px solid #003DA5}
+  .logo-box{background:#003DA5;color:#FFD100;padding:6px 14px;border-radius:8px;font-size:18px;font-weight:900}
+  h1{font-size:18px;margin:0;color:#003DA5}h2{font-size:13px;color:#666;font-weight:400;margin:0}
+  .badge{display:inline-block;padding:4px 14px;border-radius:6px;font-weight:800;font-size:14px;color:#fff;background:${condColor}}
+  table{width:100%;border-collapse:collapse;margin:14px 0}th{background:#003DA5;color:#fff;padding:8px 10px;text-align:left;font-size:11px}
+  td{padding:7px 10px;border-bottom:1px solid #E2E8F4;font-size:12px}tr:nth-child(even){background:#F8FAFF}
+  .alerta{background:#FEE2E2;border-left:4px solid #D72B3F;padding:10px 14px;border-radius:4px;margin:14px 0;font-size:11px}
+  .footer{margin-top:24px;padding-top:10px;border-top:1px solid #E2E8F4;font-size:10px;color:#8896B3;display:flex;justify-content:space-between}
+  @media print{body{margin:10px}}
+  </style></head><body>
+  <div class="logo"><div class="logo-box">K+</div><div><h1>Informe de Resultado de Inventario</h1><h2>Control Interno de Campo · Kielsa Farmacéutica</h2></div></div>
+  <table><tr><td><strong>Farmacia</strong></td><td>${farm}</td><td><strong>Mes</strong></td><td>${mes.charAt(0).toUpperCase()+mes.slice(1)} 2026</td></tr>
+  <tr><td><strong>Auditor</strong></td><td>${USER.nombre}</td><td><strong>Fecha</strong></td><td>${new Date().toLocaleDateString('es-HN')}</td></tr>
+  <tr><td><strong>Categoría</strong></td><td>${cat}</td><td><strong>Venta Promedio</strong></td><td>L. ${(venta||0).toLocaleString('es-HN',{minimumFractionDigits:2})}</td></tr></table>
+  <table><thead><tr><th>Faltante</th><th>Sobrante</th><th>Neto</th><th>% vs Venta</th><th>Condición</th></tr></thead>
+  <tbody><tr><td style="color:#D72B3F;font-weight:700">L. ${fal.toLocaleString('es-HN',{minimumFractionDigits:2})}</td>
+  <td style="color:#16a34a;font-weight:700">L. ${sob.toLocaleString('es-HN',{minimumFractionDigits:2})}</td>
+  <td style="font-weight:900;color:${net<0?'#D72B3F':'#16a34a'}">L. ${net.toLocaleString('es-HN',{minimumFractionDigits:2})}</td>
+  <td>${pct}%</td><td><span class="badge">${cond}</span></td></tr></tbody></table>
+  ${cond==='Critico'||cond==='Crítico'?'<div class="alerta"><strong>ALERTA:</strong> Farmacia en condicion Critica. Se requiere seguimiento inmediato y plan de accion correctiva.</div>':''}
+  ${obs?`<div style="margin-top:12px"><strong>Observaciones:</strong><p style="color:#374151;margin-top:6px">${obs}</p></div>`:''}
+  <div style="margin-top:20px;padding:12px;background:#F8FAFF;border-radius:8px;font-size:11px;color:#374151">
+    <strong>Firmas:</strong><br><br>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:16px">
+      <div><div style="border-top:1px solid #1A2340;padding-top:6px;text-align:center">${USER.nombre}<br><span style="color:#666;font-size:10px">Auditor CI</span></div></div>
+      <div><div style="border-top:1px solid #1A2340;padding-top:6px;text-align:center">Jefe CI Campo<br><span style="color:#666;font-size:10px">Revisado por</span></div></div>
+    </div>
+  </div>
+  <div class="footer"><span>Desarrollado por Oscar Paiz · Control Interno Kielsa</span><span>Generado: ${new Date().toLocaleString('es-HN')}</span></div>
+  </body></html>`);
+  w.document.close();setTimeout(()=>w.print(),500);
+}
+
+// ── JEFE CI: PLAN ────────────────────────────────────────────
+async function cargarExcel(input){
+  const file=input.files[0];if(!file)return;
+  const mes=$('jef-mes').value,status=$('excel-status');
+  status.innerHTML='<span style="color:var(--am)">Procesando...</span>';
+  const reader=new FileReader();
+  reader.onload=async function(ev){
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const params={};
+      const sheetP=wb.SheetNames.find(s=>s.toUpperCase().includes('PARAM'));
+      if(sheetP){
+        const rp=XLSX.utils.sheet_to_json(wb.Sheets[sheetP],{defval:''});
+        rp.forEach(r=>{
+          const keys=Object.keys(r);
+          const get=(...ns)=>{for(const n of ns){const k=keys.find(k=>k.toUpperCase().includes(n.toUpperCase()));if(k&&r[k])return String(r[k]).trim();}return'';};
+          const farm=get('FARMACIA','NOMBRE','PDV','CORTO').toUpperCase();
+          if(farm.startsWith('KIELSA')){
+            const venta=parseFloat(get('VENTA','PROM'))||0;
+            params[farm]={venta,tol:calcFalTol(venta),cat:get('CATEGORIA','CAT')||'C'};
+          }
+        });
+      }
+      const rows=[];
+      for(const sn of wb.SheetNames){
+        if(sheetP&&sn===sheetP)continue;
+        const ws=wb.Sheets[sn];
+        const raw=XLSX.utils.sheet_to_json(ws,{defval:'',raw:false,range:1});
+        for(const r of raw){
+          const keys=Object.keys(r);
+          const get=(...ns)=>{for(const n of ns){const k=keys.find(k=>k.toUpperCase().includes(n.toUpperCase()));if(k&&String(r[k]).trim())return String(r[k]).trim();}return'';};
+          const farm=get('NOMBRE CORTO','PDV','FARMACIA','CORTO').toUpperCase();
+          if(!farm.startsWith('KIELSA'))continue;
+          const fechaRaw=get('FECHA');let fecha=null;
+          if(fechaRaw){try{const d=new Date(fechaRaw);if(!isNaN(d))fecha=d.toISOString().split('T')[0];}catch(e){}}
+          const p=params[farm]||{};
+          const venta=p.venta||0;
+          rows.push({mes,anio:2026,farmacia_cod:farm,auditor_nom:get('AUDITOR','RESPONSABLE')||'',
+            supervisor:get('SUPERVISOR'),jop:get('JOP'),zona:get('ZONA'),ciudad:get('CIUDAD','LOCALIDAD'),
+            pais:USER.pais||'HONDURAS',categoria:p.cat||get('CATEGORIA','CAT')||'C',
+            fecha_asignacion:fecha,venta_prom:venta,fal_tolerable:calcFalTol(venta),
+            tipo_actividad:'INV. GENERAL',estado:'PENDIENTE'});
+        }
+      }
+      if(!rows.length){status.innerHTML='<span style="color:var(--ro)">No se encontraron farmacias KIELSA</span>';return;}
+      let delQ=`mes=eq.${mes}&anio=eq.2026`;
+      if(USER.pais)delQ+=`&pais=eq.${USER.pais}`;
+      if(USER.zona)delQ+=`&zona=eq.${USER.zona}`;
+      await api('DELETE','plan_trabajo',delQ);
+      for(let i=0;i<rows.length;i+=50)await api('POST','plan_trabajo',null,rows.slice(i,i+50));
+      const pInfo=Object.keys(params).length>0?` · ${Object.keys(params).length} con parámetros`:'';
+      status.innerHTML=`<span style="color:var(--ve)">${rows.length} farmacias cargadas${pInfo}</span>`;
+      toast('Plan cargado','ok');loadJefPlan();
+    }catch(e){status.innerHTML=`<span style="color:var(--ro)">Error: ${e.message}</span>`;}
+  };
+  reader.readAsArrayBuffer(file);input.value='';
+}
+
+async function loadJefPlan(){
+  const mes=$('jef-mes').value,zona=$('jef-zona')?.value||'',list=$('jef-plan-list');
+  list.innerHTML='<div class="empty">Cargando...</div>';
+  try{
+    let q=`mes=eq.${mes}&anio=eq.2026&order=auditor_nom.asc,farmacia_cod.asc`;
+    if(USER.pais&&USER.role!=='ADMIN')q+=`&pais=eq.${encodeURIComponent(USER.pais)}`;
+    if(USER.zona)q+=`&zona=eq.${encodeURIComponent(USER.zona)}`;
+    else if(zona)q+=`&zona=eq.${encodeURIComponent(zona)}`;
+    const data=await api('GET','plan_trabajo',q);
+    if(!data.length){list.innerHTML='<div class="empty">Sin plan para este mes</div>';return;}
+    const porAud={};
+    data.forEach(d=>{if(!porAud[d.auditor_nom])porAud[d.auditor_nom]=[];porAud[d.auditor_nom].push(d);});
+    list.innerHTML=Object.entries(porAud).map(([aud,items])=>{
+      const done=items.filter(i=>i.estado==='EJECUTADO').length;
+      const draft=items.filter(i=>i.estado==='BORRADOR').length;
+      const k=aud.replace(/[^a-zA-Z0-9]/g,'-');
+      const tags=items.map(i=>{
+        const cls=i.estado==='EJECUTADO'?'farm-done':i.estado==='BORRADOR'?'farm-draft':'farm-pend';
+        const cat=i.categoria||'C';
+        return`<span class="farm-tag ${cls}" onclick="openEditModal(${i.id},'${i.farmacia_cod}','${aud}','${cat}',${i.venta_prom||0},${i.fecha_asignacion||null})" style="cursor:pointer" title="Editar">
+          ${i.farmacia_cod} (${cat})
+          ${i.estado==='EJECUTADO'?'✓':i.estado==='BORRADOR'?'⏸':''}
+          <button onclick="event.stopPropagation();eliminarId(${i.id})" title="Eliminar">×</button>
+        </span>`;
+      }).join('');
+      return`<div class="aud-card">
+        <div class="aud-nom">
+          <span>${aud}</span>
+          <span style="font-size:10px;color:rgba(255,255,255,.3)">${done}/${items.length}${draft?' · '+draft+' borradores':''}</span>
+        </div>
+        <div>${tags}</div>
+        <div class="divider"></div>
+        <div class="edit-row">
+          <input class="fi" placeholder="KIELSA 000" id="nf-${k}" style="font-size:11px;text-transform:uppercase">
+          <button class="btn-sm btn-az-sm" onclick="agregarFarm('${aud}','${mes}','${k}')">+ Agregar</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){list.innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+
+async function agregarFarm(aud,mes,key){
+  const farm=($('nf-'+key)||{}).value?.trim().toUpperCase();
+  if(!farm||!farm.startsWith('KIELSA')){toast('Codigo invalido','err');return;}
+  try{
+    const ex=await api('GET','plan_trabajo',`mes=eq.${mes}&anio=eq.2026&farmacia_cod=eq.${encodeURIComponent(farm)}`);
+    if(ex.length>0){toast(`${farm} ya asignada a ${ex[0].auditor_nom}`,'err');return;}
+    const fm=FARM_MAP[farm]||{};
+    const venta=fm.venta||0;
+    await api('POST','plan_trabajo',null,[{mes,anio:2026,farmacia_cod:farm,auditor_nom:aud,
+      estado:'PENDIENTE',tipo_actividad:'INV. GENERAL',pais:USER.pais||'HONDURAS',
+      categoria:fm.categoria||'C',zona:fm.zona||'',ciudad:fm.ciudad||'',
+      venta_prom:venta,fal_tolerable:calcFalTol(venta)}]);
+    toast('Farmacia agregada','ok');loadJefPlan();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+async function eliminarId(id){
+  if(!confirm('Eliminar esta asignacion?'))return;
+  try{await api('DELETE','plan_trabajo',`id=eq.${id}`);toast('Eliminado','ok');loadJefPlan();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── MODAL EDITAR ─────────────────────────────────────────────
+async function openEditModal(id,farm,aud,cat,venta,fecha){
+  $('me-id').value=id;$('me-farm').value=farm;$('me-aud').value=aud;
+  $('me-cat').value=cat||'C';$('me-venta').value=venta||0;
+  $('me-tol').value=calcFalTol(venta||0);
+  $('me-fecha').value=fecha||'';$('me-fecha-rep').value='';
+  $('me-sub').textContent=`${farm} — ${aud}`;
+  $('modal-edit').classList.add('show');
+}
+// Update tolerable when venta changes in edit modal
+document.addEventListener('input',e=>{if(e.target.id==='me-venta')$('me-tol').value=calcFalTol(parseFloat(e.target.value)||0);});
+
+async function guardarEdit(){
+  const id=$('me-id').value,farm=$('me-farm').value.trim().toUpperCase(),aud=$('me-aud').value.trim();
+  if(!farm||!aud){toast('Completa los campos','err');return;}
+  const rep=$('me-fecha-rep').value||null;
+  if(rep){
+    const just=prompt('Motivo de reprogramacion (obligatorio):');
+    if(!just?.trim()){toast('Motivo obligatorio','err');return;}
+  }
+  const fechaFinal=rep||$('me-fecha').value||null;
+  const venta=parseFloat($('me-venta').value)||0;
+  try{
+    await api('PATCH','plan_trabajo',`id=eq.${id}`,{
+      farmacia_cod:farm,auditor_nom:aud,tipo_actividad:$('me-tipo').value,
+      categoria:$('me-cat').value,venta_prom:venta,fal_tolerable:calcFalTol(venta),
+      fecha_asignacion:fechaFinal
+    });
+    closeModal('modal-edit');toast(rep?'Reprogramado: '+rep:'Actualizado','ok');loadJefPlan();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+async function eliminarEdit(){
+  if(!confirm('Eliminar esta asignacion?'))return;
+  try{await api('DELETE','plan_trabajo',`id=eq.${$('me-id').value}`);closeModal('modal-edit');toast('Eliminado','ok');loadJefPlan();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── RESULTADOS ────────────────────────────────────────────────
+async function loadResultados(){
+  const mes=$('jef-mes')?.value||'septiembre';
+  const list=$('res-list');if(!list)return;
+  try{
+    let q=`mes=eq.${mes}&anio=eq.2026&estado=eq.ENVIADO&order=created_at.desc&limit=200`;
+    if(USER.pais&&USER.role!=='ADMIN')q+=`&pais=eq.${encodeURIComponent(USER.pais)}`;
+    const data=await api('GET','resultados',q);
+    const tF=data.reduce((a,d)=>a+(parseFloat(d.faltante)||0),0);
+    const tS=data.reduce((a,d)=>a+(parseFloat(d.sobrante)||0),0);
+    const tN=data.reduce((a,d)=>a+(parseFloat(d.neto)||0),0);
+    $('res-sub').textContent=`${mes.charAt(0).toUpperCase()+mes.slice(1)} · ${data.length} resultados`;
+    $('res-kpis').innerHTML=`
+      <div class="kpi"><div class="kl">Faltante</div><div class="kv" style="color:var(--ro);font-size:15px">${fL(tF)}</div></div>
+      <div class="kpi"><div class="kl">Sobrante</div><div class="kv" style="color:var(--ve);font-size:15px">${fL(tS)}</div></div>
+      <div class="kpi"><div class="kl">Neto</div><div class="kv" style="color:${tN<0?'var(--ro)':'var(--ve)'};font-size:15px">${fL(tN)}</div></div>
+      <div class="kpi"><div class="kl">Revisiones</div><div class="kv" style="color:#fff">${data.length}</div></div>`;
+    list.innerHTML=data.length?data.map(d=>{
+      const col=COND_COLOR[d.matriz_revision]||'rgba(255,255,255,.2)';
+      const pct=d.venta_prom>0?(d.neto/d.venta_prom*100).toFixed(4):0;
+      return`<div style="background:rgba(255,255,255,.04);border-radius:10px;padding:12px 14px;margin-bottom:7px;border-left:3px solid ${col}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div>
+            <div style="font-size:13px;font-weight:800;color:#fff">${d.farmacia_cod} <span style="background:#1A2340;color:rgba(255,255,255,.5);font-size:9px;padding:1px 5px;border-radius:3px">${d.categoria||'–'}</span></div>
+            <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:2px">${d.auditor_nom||'–'} · ${d.mes||'–'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:900;color:${(parseFloat(d.neto)||0)<0?'var(--ro)':'var(--ve)'}">${fL(d.neto)}</div>
+            <div style="font-size:9px;color:${col};font-weight:700">${d.matriz_revision||'–'}</div>
+            <button onclick="eliminarRes(${d.id},'${d.farmacia_cod}')" style="background:rgba(215,43,63,.2);color:#ff6b6b;border:none;border-radius:5px;padding:2px 7px;font-size:9px;font-weight:700;cursor:pointer;margin-top:3px">Eliminar</button>
+          </div>
+        </div>
+      </div>`;
+    }).join(''):'<div class="empty">Sin resultados</div>';
+  }catch(e){list.innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+async function eliminarRes(id,farm){
+  if(!confirm(`Eliminar resultado de ${farm}?`))return;
+  try{await api('DELETE','resultados',`id=eq.${id}`);toast('Eliminado','ok');loadResultados();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── OTROS AJUSTES ─────────────────────────────────────────────
+async function cargarAjustes(input){
+  const file=input.files[0];if(!file)return;
+  const status=$('ajustes-status');
+  status.innerHTML='<span style="color:var(--am)">Procesando...</span>';
+  const tipos_validos=['Danados dirigidos','Dañados dirigidos','Dañados sin efecto cobro','Fuera de Política (vencidos)','No compensatorios','Ajustes dirigidos','Sin efecto cobro (aut. GG)'];
+  const tipos_cobro=['Dañados dirigidos','Danados dirigidos','Fuera de Política (vencidos)','Ajustes dirigidos'];
+  const reader=new FileReader();
+  reader.onload=async function(ev){
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const rows=[];
+      for(const sn of wb.SheetNames){
+        const raw=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
+        for(const r of raw){
+          const farm=String(r['FARMACIA']||r['farmacia_cod']||'').trim().toUpperCase();
+          const mes=String(r['MES']||r['mes']||'').trim().toLowerCase();
+          const tipo=String(r['TIPO_AJUSTE']||r['tipo_ajuste']||'').trim();
+          const monto=parseFloat(r['MONTO']||r['monto'])||0;
+          if(!farm.startsWith('KIELSA')||!mes||!tipo||!monto)continue;
+          const fm=FARM_MAP[farm]||{};
+          const venta=parseFloat(r['VENTA_PROM']||fm.venta||0);
+          rows.push({farmacia_cod:farm,mes,anio:parseInt(r['AÑO']||r['anio'])||2026,
+            tipo_ajuste:tipo,efecto_cobro:tipos_cobro.some(t=>tipo.includes(t.replace('ñ','n'))||tipo===t),
+            monto,venta_prom:venta,pct_venta:venta>0?Math.round(monto/venta*10000)/10000:0,
+            descripcion:String(r['DESCRIPCION']||'').trim(),
+            pais:USER.pais||'HONDURAS',estado:'REGISTRADO'});
+        }
+      }
+      if(!rows.length){status.innerHTML='<span style="color:var(--ro)">No se encontraron datos validos</span>';return;}
+      for(let i=0;i<rows.length;i+=50)await api('POST','ajustes',null,rows.slice(i,i+50));
+      status.innerHTML=`<span style="color:var(--ve)">${rows.length} ajustes cargados</span>`;
+      toast('Ajustes cargados','ok');loadAjustes();
+    }catch(e){status.innerHTML=`<span style="color:var(--ro)">Error: ${e.message}</span>`;}
+  };
+  reader.readAsArrayBuffer(file);input.value='';
+}
+
+async function loadAjustes(){
+  const list=$('ajustes-lista');if(!list)return;
+  const mesF=$('ajustes-mes-fil')?.value||'';
+  try{
+    let q='order=mes.asc,farmacia_cod.asc&limit=200';
+    if(mesF)q+=`&mes=eq.${mesF}`;
+    if(USER.pais&&USER.role!=='ADMIN')q+=`&pais=eq.${encodeURIComponent(USER.pais)}`;
+    const data=await api('GET','ajustes',q);
+    if(!data.length){list.innerHTML='<div class="empty">Sin ajustes registrados</div>';return;}
+    const totalCobro=data.filter(d=>d.efecto_cobro).reduce((a,d)=>a+(parseFloat(d.monto)||0),0);
+    list.innerHTML=`<div style="background:rgba(215,43,63,.1);border:1px solid rgba(215,43,63,.2);border-radius:8px;padding:10px 13px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+      <div style="font-size:10px;color:rgba(255,255,255,.4)">Total con efecto cobro</div>
+      <div style="font-size:14px;font-weight:900;color:var(--ro)">${fL(totalCobro)}</div>
+    </div>`+data.map(d=>{
+      const col=d.efecto_cobro?'rgba(215,43,63,.3)':'rgba(255,255,255,.1)';
+      const pct=d.venta_prom>0?`${(d.monto/d.venta_prom*100).toFixed(4)}%`:'–';
+      return`<div style="background:rgba(255,255,255,.04);border-radius:9px;padding:10px 13px;margin-bottom:6px;border-left:3px solid ${col}">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-size:12px;font-weight:800;color:#fff">${d.farmacia_cod}</div>
+            <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:2px">${d.tipo_ajuste} · ${d.mes||'–'}${d.efecto_cobro?' · COBRO':' · informativo'}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:12px;font-weight:800;color:var(--ro)">${fL(d.monto)}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,.35)">${pct}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){list.innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+
+// ── PLAN SUGERIDO ─────────────────────────────────────────────
+let PLAN_SUGERIDO=[];
+async function loadPlanSugerido(){}
+
+async function generarPlanSugerido(){
+  const mes=$('sug-mes')?.value,zona=$('sug-zona')?.value||'';
+  const btn=$('btn-generar');btn.innerHTML='<span class="spin"></span>';btn.disabled=true;
+  try{
+    const hist=await api('GET','resultados',`anio=eq.2026&estado=eq.ENVIADO&pais=eq.HONDURAS&order=mes.asc`);
+    const mesPlanN=OM[mes]||10;
+    const ultimaVisita={};
+    hist.forEach(r=>{
+      const m=OM[r.mes]||0;
+      if(!ultimaVisita[r.farmacia_cod]||m>ultimaVisita[r.farmacia_cod].mesN){
+        ultimaVisita[r.farmacia_cod]={mes:r.mes,mesN:m,condicion:r.matriz_revision,auditor:r.auditor_nom};
+      }
+    });
+    const sugeridas=[];const procesadas=new Set();
+    const farmsActivas=Object.entries(FARM_MAP).filter(([f,fm])=>!zona||fm.zona===zona);
+    // P1: Criticos
+    farmsActivas.forEach(([farm,fm])=>{
+      const uv=ultimaVisita[farm];
+      if(uv&&(uv.condicion==='Crítico'||uv.condicion==='Critico')){
+        sugeridas.push({farm,prioridad:1,motivo:'Condicion Critica - seguimiento obligatorio',condicion:uv.condicion,diasSin:(mesPlanN-uv.mesN)*30,auditor:fm.auditor==='EQUIPO SAN PEDRO SULA'||fm.auditor==='EQUIPO TEGUCIGALPA'?'':fm.auditor,zona:fm.zona,cat:fm.categoria});
+        procesadas.add(farm);
+      }
+    });
+    // P2: +60 dias
+    farmsActivas.forEach(([farm,fm])=>{
+      if(procesadas.has(farm))return;
+      const uv=ultimaVisita[farm];
+      const dias=uv?(mesPlanN-uv.mesN)*30:999;
+      if(dias>=60){sugeridas.push({farm,prioridad:2,motivo:`${dias} dias sin visita`,condicion:uv?.condicion||'Sin historial',diasSin:dias,auditor:fm.auditor==='EQUIPO SAN PEDRO SULA'||fm.auditor==='EQUIPO TEGUCIGALPA'?'':fm.auditor,zona:fm.zona,cat:fm.categoria});procesadas.add(farm);}
+    });
+    // P3: Sin mes anterior
+    farmsActivas.forEach(([farm,fm])=>{
+      if(procesadas.has(farm))return;
+      const uv=ultimaVisita[farm];
+      if(!uv||uv.mesN<mesPlanN-1){sugeridas.push({farm,prioridad:3,motivo:'Sin visita mes anterior',condicion:uv?.condicion||'Sin historial',diasSin:uv?(mesPlanN-uv.mesN)*30:999,auditor:fm.auditor==='EQUIPO SAN PEDRO SULA'||fm.auditor==='EQUIPO TEGUCIGALPA'?'':fm.auditor,zona:fm.zona,cat:fm.categoria});procesadas.add(farm);}
+    });
+    // P4: Solo auditors - include remaining assigned farms regardless of days
+    // (they have fixed capacity and should cover all their farms each month)
+    const SOLO_AUDS={"Monica Andrade": ["KIELSA 010", "KIELSA 013", "KIELSA 083", "KIELSA 235", "KIELSA 035", "KIELSA 082", "KIELSA 144", "KIELSA 208", "KIELSA 221", "KIELSA 227", "KIELSA 254", "KIELSA 004", "KIELSA 005", "KIELSA 068", "KIELSA 073", "KIELSA 136", "KIELSA 154", "KIELSA 209"], "Oscar Melendez": ["KIELSA 011", "KIELSA 043", "KIELSA 057", "KIELSA 243", "KIELSA 259", "KIELSA 177", "KIELSA 160", "KIELSA 060", "KIELSA 061", "KIELSA 069", "KIELSA 123", "KIELSA 242", "KIELSA 140", "KIELSA 204", "KIELSA 220", "KIELSA 252", "KIELSA 271", "KIELSA 290", "KIELSA 128", "KIELSA 306", "KIELSA 268"], "Ortwin Maltez": ["KIELSA 080", "KIELSA 137", "KIELSA 036", "KIELSA 225", "KIELSA 250", "KIELSA 293", "KIELSA 228", "KIELSA 040", "KIELSA 071", "KIELSA 195", "KIELSA 247", "KIELSA 078", "KIELSA 279", "KIELSA 118", "KIELSA 174"], "Fanny Ramirez": ["KIELSA 070", "KIELSA 134", "KIELSA 139", "KIELSA 256", "KIELSA 282", "KIELSA 147", "KIELSA 170", "KIELSA 197", "KIELSA 298", "KIELSA 297", "KIELSA 305", "KIELSA 126", "KIELSA 103", "KIELSA 223", "KIELSA 240", "KIELSA 133"], "Jamil Flores": ["KIELSA 087", "KIELSA 161", "KIELSA 033", "KIELSA 088", "KIELSA 285", "KIELSA 210", "KIELSA 276", "KIELSA 065", "KIELSA 077", "KIELSA 234", "KIELSA 263", "KIELSA 032", "KIELSA 196", "KIELSA 224", "KIELSA 108", "KIELSA 277", "KIELSA 119", "KIELSA 121"], "Daniel Tinoco": ["KIELSA 081", "KIELSA 166", "KIELSA 272", "KIELSA 086", "KIELSA 100", "KIELSA 201", "KIELSA 262", "KIELSA 230", "KIELSA 270"], "Tulio Lopez": ["KIELSA 233", "KIELSA 104", "KIELSA 188", "KIELSA 113", "KIELSA 155", "KIELSA 274", "KIELSA 281", "KIELSA 059", "KIELSA 120", "KIELSA 284", "KIELSA 237", "KIELSA 280"], "Dunia Arita": ["KIELSA 149", "KIELSA 180", "KIELSA 215", "KIELSA 278", "KIELSA 138", "KIELSA 038", "KIELSA 130", "KIELSA 294", "KIELSA 232", "KIELSA 181", "KIELSA 176", "KIELSA 092", "KIELSA 106", "KIELSA 175", "KIELSA 304", "KIELSA 162", "KIELSA 229", "KIELSA 251", "KIELSA 255"], "Nelsy Sarmiento": ["KIELSA 114", "KIELSA 148", "KIELSA 079", "KIELSA 295", "KIELSA 163", "KIELSA 169", "KIELSA 211", "KIELSA 216", "KIELSA 238", "KIELSA 030", "KIELSA 257", "KIELSA 116", "KIELSA 173", "KIELSA 199", "KIELSA 309", "KIELSA 296"], "Karina Gómez": ["KIELSA 009", "KIELSA 246", "KIELSA 131", "KIELSA 172", "KIELSA 117", "KIELSA 179", "KIELSA 074", "KIELSA 202", "KIELSA 286", "KIELSA 206", "KIELSA 236", "KIELSA 051"]};
+    Object.entries(SOLO_AUDS).forEach(([aud,farms])=>{
+      farms.forEach(farm=>{
+        if(procesadas.has(farm))return;
+        const fm=FARM_MAP[farm]||{};
+        if(zona&&fm.zona!==zona)return;
+        const uv=ultimaVisita[farm];
+        sugeridas.push({farm,prioridad:3,motivo:'Revisión programada mensual',condicion:uv?.condicion||'Sin historial',diasSin:uv?(mesPlanN-uv.mesN)*30:30,auditor:aud,zona:fm.zona,cat:fm.categoria});
+        procesadas.add(farm);
+      });
+    });
+    PLAN_SUGERIDO=[...sugeridas];
+    const kpis=$('sug-kpis');
+    if(kpis){kpis.style.display='grid';kpis.innerHTML=`
+      <div class="kpi"><div class="kl">Criticas</div><div class="kv" style="color:var(--ro)">${sugeridas.filter(s=>s.prioridad===1).length}</div></div>
+      <div class="kpi"><div class="kl">+60 dias</div><div class="kv" style="color:var(--na)">${sugeridas.filter(s=>s.prioridad===2).length}</div></div>
+      <div class="kpi"><div class="kl">Sin mes ant.</div><div class="kv" style="color:var(--az)">${sugeridas.filter(s=>s.prioridad===3).length}</div></div>
+      <div class="kpi"><div class="kl">Total</div><div class="kv" style="color:var(--ve)">${sugeridas.length}</div></div>`;}
+    renderSugerido();$('sug-resultado').style.display='block';
+  }catch(e){toast('Error: '+e.message,'err');}
+  finally{btn.innerHTML='Generar Plan Sugerido';btn.disabled=false;}
+}
+
+function renderSugerido(){
+  const list=$('sug-lista'),count=$('sug-count');
+  if(count)count.textContent=`${PLAN_SUGERIDO.length} Farmacias Sugeridas`;
+  const priCls=['sug-extra','sug-crit','sug-60','sug-mes'];
+  const priLbl=['Extra','Critico','+ 60 dias','Sin mes ant.'];
+  const priColor=['rgba(124,58,237,.8)','var(--ro)','var(--na)','var(--az)'];
+  if(!list)return;
+  // Sort by auditor first, then priority
+  const sorted=[...PLAN_SUGERIDO].map((s,idx)=>({...s,_idx:idx}))
+    .sort((a,b)=>(a.auditor||'').localeCompare(b.auditor||'')||(a.prioridad-b.prioridad));
+  // Group by auditor
+  let lastAud='';
+  list.innerHTML=sorted.map((s)=>{
+    const i=s._idx;
+    const borderColor=s.prioridad===1?'var(--ro)':s.extra?'var(--mo)':'rgba(255,255,255,.12)';
+    const bgColor=s.prioridad===1?'rgba(215,43,63,.08)':'rgba(255,255,255,.04)';
+    const audName=s.auditor||'Sin asignar';
+    const audHeader=audName!==lastAud?(lastAud=audName,
+      `<div style="background:rgba(255,209,0,.12);border:1px solid rgba(255,209,0,.2);border-radius:9px;padding:8px 13px;margin-bottom:6px;margin-top:${lastAud===audName&&lastAud!==''?'0':'10px'}">
+        <div style="font-size:11px;font-weight:800;color:var(--am)">👤 ${audName}</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.35)">Zona: ${s.zona||'–'}</div>
+      </div>`):'';
+    return audHeader+`<div style="border-radius:10px;padding:11px 13px;margin-bottom:6px;display:flex;align-items:center;gap:10px;border:1px solid ${borderColor};border-left:3px solid ${borderColor};background:${bgColor};margin-left:8px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px">
+          ${s.farm} <span style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.6);font-size:8px;padding:1px 5px;border-radius:3px">${s.cat}</span>
+          <span style="background:rgba(255,255,255,.08);color:${priColor[s.prioridad]||'rgba(255,255,255,.4)'};font-size:8px;padding:1px 5px;border-radius:3px;font-weight:700">${priLbl[s.prioridad]||'extra'}</span>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:2px">${s.motivo}</div>
+        <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:2px">Zona: ${s.zona||'–'}</div>
+        <div style="display:flex;gap:6px;margin-top:7px;align-items:center;flex-wrap:wrap">
+          <button onclick="abrirFechas(${s._idx},this)" style="background:rgba(255,209,0,.15);border:1px solid rgba(255,209,0,.3);color:var(--am);border-radius:7px;padding:4px 10px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit" id="sug-btn-${s._idx}">
+            📅 ${s.fecha_inicio?s.fecha_inicio+' → '+(s.fecha_fin||'?'):'Asignar fechas'}
+          </button>
+        </div>
+        <div id="sug-dates-${s._idx}" style="display:none;background:rgba(0,0,0,.3);border:1px solid rgba(255,209,0,.2);border-radius:9px;padding:10px;margin-top:6px">
+          <div style="font-size:9px;color:var(--am);font-weight:700;margin-bottom:6px">FECHAS DE VISITA</div>
+          <div class="row2" style="gap:6px">
+            <div><label style="font-size:9px;color:rgba(255,255,255,.4);display:block;margin-bottom:2px">Inicio</label>
+              <input type="date" id="sug-fi-${s._idx}" class="fi" style="margin-bottom:0;font-size:12px;padding:6px 8px" value="${s.fecha_inicio||''}" onchange="actualizarBtnFecha(${s._idx})"></div>
+            <div><label style="font-size:9px;color:rgba(255,255,255,.4);display:block;margin-bottom:2px">Fin</label>
+              <input type="date" id="sug-ff-${s._idx}" class="fi" style="margin-bottom:0;font-size:12px;padding:6px 8px" value="${s.fecha_fin||''}" onchange="actualizarBtnFecha(${s._idx})"></div>
+          </div>
+          <button onclick="cerrarFechas(${s._idx})" style="margin-top:7px;width:100%;background:var(--am);color:#001040;border:none;padding:6px;border-radius:7px;font-size:11px;font-weight:800;cursor:pointer">✓ Listo</button>
+        </div>
+      </div>
+      <button onclick="quitarSugerido(${s._idx})" style="background:none;border:none;color:rgba(255,100,100,.6);cursor:pointer;font-size:16px;align-self:flex-start;padding:2px">✕</button>
+    </div>`}).join('');
+  renderResumenAud();
+}
+
+function quitarSugerido(i){PLAN_SUGERIDO.splice(i,1);renderSugerido();toast('Farmacia removida','info');}
+
+function renderResumenAud(){
+  const resumen={};
+  PLAN_SUGERIDO.forEach(s=>{const k=s.auditor||'Sin asignar';if(!resumen[k])resumen[k]={total:0,crit:0};resumen[k].total++;if(s.prioridad===1)resumen[k].crit++;});
+  const el=$('sug-resumen');if(!el)return;
+  el.innerHTML=`<table style="width:100%;border-collapse:collapse;font-size:11px">
+    <thead><tr style="background:rgba(255,255,255,.08)"><th style="padding:6px 9px;text-align:left;color:rgba(255,255,255,.5);font-size:10px">Auditor</th><th style="padding:6px 9px;text-align:center;color:rgba(255,255,255,.5);font-size:10px">Total</th><th style="padding:6px 9px;text-align:center;color:rgba(255,255,255,.5);font-size:10px">Criticas</th></tr></thead>
+    <tbody>${Object.entries(resumen).map(([aud,v],i)=>`<tr style="border-bottom:1px solid rgba(255,255,255,.05)">
+      <td style="padding:6px 9px;font-weight:700;color:#fff">${aud}</td>
+      <td style="padding:6px 9px;text-align:center;font-weight:800;color:var(--am)">${v.total}</td>
+      <td style="padding:6px 9px;text-align:center;color:${v.crit>0?'var(--ro)':'rgba(255,255,255,.2)'};font-weight:700">${v.crit||'–'}</td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+}
+
+function abrirFechas(idx,btn){
+  const panel=document.getElementById('sug-dates-'+idx);
+  if(!panel)return;
+  // Close all other open panels
+  document.querySelectorAll('[id^="sug-dates-"]').forEach(p=>{if(p.id!=='sug-dates-'+idx)p.style.display='none';});
+  panel.style.display=panel.style.display==='none'?'block':'none';
+}
+function cerrarFechas(idx){
+  const panel=document.getElementById('sug-dates-'+idx);
+  if(panel)panel.style.display='none';
+  actualizarBtnFecha(idx);
+}
+function actualizarBtnFecha(idx){
+  const fi=document.getElementById('sug-fi-'+idx)?.value||'';
+  const ff=document.getElementById('sug-ff-'+idx)?.value||'';
+  const btn=document.getElementById('sug-btn-'+idx);
+  if(btn)btn.textContent='📅 '+(fi?fi+' → '+(ff||'?'):'Asignar fechas');
+  // Save to PLAN_SUGERIDO
+  if(PLAN_SUGERIDO[idx]){PLAN_SUGERIDO[idx].fecha_inicio=fi||null;PLAN_SUGERIDO[idx].fecha_fin=ff||null;}
+}
+function agregarExtra(){
+  const farm=$('sug-farm')?.value.trim().toUpperCase();
+  const aud=$('sug-aud')?.value.trim();
+  const motivo=$('sug-motivo')?.value;
+  const obs=$('sug-obs')?.value.trim();
+  if(!farm||!farm.startsWith('KIELSA')){toast('Codigo invalido','err');return;}
+  if(!motivo){toast('Selecciona el motivo','err');return;}
+  if(!obs){toast('Ingresa el detalle del motivo','err');return;}
+  const fm=FARM_MAP[farm]||{};
+  PLAN_SUGERIDO.push({farm,auditor:aud||'',prioridad:0,motivo:motivo+': '+obs,condicion:'–',cat:fm.categoria||'C',zona:fm.zona||'',extra:true});
+  $('sug-farm').value='';$('sug-aud').value='';$('sug-motivo').value='';$('sug-obs').value='';
+  renderSugerido();toast('Farmacia agregada al plan','ok');
+}
+
+async function confirmarPlan(){
+  // Collect dates from inputs before confirming
+  PLAN_SUGERIDO.forEach((s,i)=>{
+    s.fecha_inicio=document.getElementById('sug-fi-'+i)?.value||null;
+    s.fecha_fin=document.getElementById('sug-ff-'+i)?.value||null;
+  });
+  if(!PLAN_SUGERIDO.length){toast('Sin farmacias en el plan','err');return;}
+  const mes=$('sug-mes')?.value;
+  if(!confirm(`Cargar plan con ${PLAN_SUGERIDO.length} farmacias para ${mes}?`))return;
+  try{
+    let delQ=`mes=eq.${mes}&anio=eq.2026`;
+    if(USER.pais)delQ+=`&pais=eq.${USER.pais}`;
+    if($('sug-zona')?.value)delQ+=`&zona=eq.${$('sug-zona').value}`;
+    await api('DELETE','plan_trabajo',delQ);
+    const rows=PLAN_SUGERIDO.map(s=>{
+      const fm=FARM_MAP[s.farm]||{};
+      const venta=fm.venta||0;
+      const fechaInicio=s.fecha_inicio||null;
+      return{mes,anio:2026,farmacia_cod:s.farm,auditor_nom:s.auditor||'',
+        zona:s.zona||fm.zona||'',ciudad:fm.ciudad||'',categoria:s.cat||'C',
+        pais:USER.pais||'HONDURAS',tipo_actividad:s.prioridad===1?'SEGUIMIENTO':'INV. GENERAL',
+        estado:'PENDIENTE',venta_prom:venta,fal_tolerable:calcFalTol(venta),
+        fecha_asignacion:fechaInicio,
+        observaciones:s.extra?s.motivo:null};
+    });
+    for(let i=0;i<rows.length;i+=50)await api('POST','plan_trabajo',null,rows.slice(i,i+50));
+    toast('Plan cargado: '+rows.length+' farmacias','ok');goTab('jefplan');
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+function exportarSugerido(){
+  if(!PLAN_SUGERIDO.length){toast('Sin datos','err');return;}
+  const csv=['FARMACIA,AUDITOR,CATEGORIA,ZONA,PRIORIDAD,MOTIVO,FECHA_INICIO,FECHA_FIN'];
+  const pl=['Extra','Critico','+60 dias','Sin mes ant.'];
+  PLAN_SUGERIDO.forEach((s,i)=>{
+    const fi=$('sug-fi-'+i)?.value||s.fecha_inicio||'';
+    const ff=$('sug-ff-'+i)?.value||s.fecha_fin||'';
+    csv.push(`"${s.farm}","${s.auditor}","${s.cat}","${s.zona}","${pl[s.prioridad]||'Extra'}","${s.motivo}","${fi}","${ff}"`);
+  });
+  const blob=new Blob([csv.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`plan_sugerido_${$('sug-mes')?.value}.csv`;a.click();
+}
+
+// ── USUARIOS ──────────────────────────────────────────────────
+function toggleUsr(){
+  const p=$('nu-perfil')?.value;
+  const zw=$('nu-zona-wrap');
+  if(zw)zw.style.display=p==='JEFE_CI'?'flex':'none';
+  // Auto-fill PIN
+  const nom=$('nu-nom')?.value||'';
+  if(nom.trim().split(' ').length>=2){
+    const parts=nom.trim().split(' ');
+    const pin=parts[0][0].toUpperCase()+(parts[1]||'').charAt(0).toUpperCase()+(parts[1]||'').slice(1).toLowerCase()+2026+(p==='JEFE_CI'?'+':'*');
+    const el=$('nu-pin');if(el)el.value=pin;
+  }
+}
+document.addEventListener('input',e=>{if(e.target.id==='nu-nom')toggleUsr();});
+
+async function crearUsuario(){
+  const nom=$('nu-nom')?.value.trim(),pin=$('nu-pin')?.value.trim();
+  const perfil=$('nu-perfil')?.value,pais=$('nu-pais')?.value||null,zona=$('nu-zona')?.value||null;
+  if(!nom||!pin){toast('Completa nombre y PIN','err');return;}
+  if(pin.length<6){toast('PIN minimo 6 caracteres','err');return;}
+  const s=USER;
+  if(s.role==='JEFE_CI'&&perfil==='JEFE_CI'){toast('No puedes crear otro Jefe CI','err');return;}
+  try{
+    await api('POST','usuarios_app',null,{nombre:nom,pin_hash:s2h(pin),perfil,pais,
+      zona:perfil==='JEFE_CI'?zona:null,activo:true,creado_por:s.nombre});
+    toast('Usuario creado: '+nom,'ok');$('nu-nom').value='';$('nu-pin').value='';loadUsuarios();
+  }catch(e){toast('Error: '+e.message,'err');}
+}
+
+async function loadUsuarios(){
+  const list=$('usr-list');if(!list)return;
+  try{
+    let q='order=perfil.asc,nombre.asc&activo=eq.true';
+    if(USER.role==='JEFE_CI')q+=`&creado_por=eq.${encodeURIComponent(USER.nombre)}`;
+    const data=await api('GET','usuarios_app',q);
+    const perflbl={'AUDITOR':'Auditor','JEFE_CI':'Jefe CI','ADMIN':'Admin','JOP':'JOP','SUPERVISOR':'Supervisor'};
+    list.innerHTML=data.length?data.map(u=>`<div class="usr-card">
+      <div><div style="font-size:13px;font-weight:700;color:#fff">${u.nombre}</div>
+      <div style="font-size:10px;color:rgba(255,255,255,.35);margin-top:2px">${perflbl[u.perfil]||u.perfil} · ${u.pais||'–'}${u.zona?' · '+u.zona:''}</div></div>
+      <button onclick="desactivar(${u.id})" style="background:rgba(215,43,63,.2);color:#ff6b6b;border:none;border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;cursor:pointer">Desactivar</button>
+    </div>`).join(''):'<div class="empty">Sin usuarios</div>';
+  }catch(e){list.innerHTML=`<div class="empty">Error: ${e.message}</div>`;}
+}
+async function desactivar(id){
+  if(!confirm('Desactivar este usuario?'))return;
+  try{await api('PATCH','usuarios_app',`id=eq.${id}`,{activo:false});toast('Desactivado','ok');loadUsuarios();}
+  catch(e){toast('Error: '+e.message,'err');}
+}
+
+// ── ADMIN ─────────────────────────────────────────────────────
+function guardarTasas(){
+  const t={HN:parseFloat($('t-hn')?.value)||25.2,GT:parseFloat($('t-gt')?.value)||7.8,NI:parseFloat($('t-ni')?.value)||36.8,CR:parseFloat($('t-cr')?.value)||520};
+  try{localStorage.setItem('kielsa_tasas',JSON.stringify(t));}catch(e){}
+  toast('Tasas guardadas','ok');
+}
+</script>
+</body>
+</html>
