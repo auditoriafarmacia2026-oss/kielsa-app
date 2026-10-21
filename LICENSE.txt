@@ -1,0 +1,10 @@
+© 2026 Oscar Paiz. Todos los derechos reservados.
+
+Control Interno de Campo · Farmacia Ideal es software propietario.
+Queda prohibida su copia, modificación, ingeniería inversa, distribución o
+uso fuera de los sitios autorizados sin autorización previa y por escrito
+del autor. El acceso a este repositorio o a la aplicación publicada no
+otorga licencia alguna sobre el código.
+
+Excepción: los archivos chart.umd.min.js (Chart.js, licencia MIT) y
+xlsx.full.min.js (SheetJS, licencia Apache 2.0) pertenecen a sus autores.
